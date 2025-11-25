@@ -25,7 +25,7 @@ RUN_USER="${SUDO_USER:-$USER}"
 # Set variables
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BASE_DIR="$(cd "$(dirname "$0")"/.. && pwd)"
-WORD_LiST="$BASE_DIR/api/words.json"
+WORD_LiST="$BASE_DIR/src/data/words.json"
 TEXT_FILE="https://www.eff.org/files/2016/07/18/eff_large_wordlist.txt"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Create directories
@@ -33,14 +33,14 @@ TEXT_FILE="https://www.eff.org/files/2016/07/18/eff_large_wordlist.txt"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Main application
 if [ -f "$WORD_LiST" ]; then
-  test_results="$(jq -r '.words|.[]' <"$WORD_LiST" 2>/dev/null | sort -uR | head -n6 | tr '\n' ' ' | grep '^')"
-  if [ -n "$test_results" ]; then
-    printf '%s\n' "$test_results"
-  else
-    printf '%s\n' "Something went wrong"
-  fi
+	test_results="$(jq -r '.words|.[]' <"$WORD_LiST" 2>/dev/null | sort -uR | head -n6 | tr '\n' ' ' | grep '^')"
+	if [ -n "$test_results" ]; then
+		printf '%s\n' "$test_results"
+	else
+		printf '%s\n' "Something went wrong"
+	fi
 else
-  printf '%s\n' "The wordlist file does not exist"
+	printf '%s\n' "The wordlist file does not exist"
 fi
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # End application

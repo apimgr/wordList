@@ -57,15 +57,16 @@ jobs:
       - name: Determine tags
         id: tags
         run: |
-          TAGS="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.COMMIT_ID }}"
+          IMAGE_NAME_LC=$(echo "${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
+          TAGS="${{ env.REGISTRY }}/${IMAGE_NAME_LC}:${{ env.COMMIT_ID }}"
           if [[ "${{ env.IS_TAG }}" == "true" ]]; then
-            TAGS="$TAGS,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}"
-            TAGS="$TAGS,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
-            TAGS="$TAGS,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.YYMM }}"
+            TAGS="$TAGS,${{ env.REGISTRY }}/${IMAGE_NAME_LC}:${{ env.VERSION }}"
+            TAGS="$TAGS,${{ env.REGISTRY }}/${IMAGE_NAME_LC}:latest"
+            TAGS="$TAGS,${{ env.REGISTRY }}/${IMAGE_NAME_LC}:${{ env.YYMM }}"
           else
-            TAGS="$TAGS,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:devel"
+            TAGS="$TAGS,${{ env.REGISTRY }}/${IMAGE_NAME_LC}:devel"
             if [[ "${{ github.ref }}" == refs/heads/beta ]]; then
-              TAGS="$TAGS,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:beta"
+              TAGS="$TAGS,${{ env.REGISTRY }}/${IMAGE_NAME_LC}:beta"
             fi
           fi
           echo "tags=$TAGS" >> $GITHUB_OUTPUT

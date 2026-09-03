@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Passphrase - {{.SiteTitle}}</title>
+    <meta name="description" content="Generate secure passphrases using the EFF Large Wordlist">
+    <meta name="theme-color" content="#6366f1">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <a href="/" class="nav-brand">
+                <div class="nav-brand-icon">📝</div>
+                <span>{{.SiteTitle}}</span>
+            </a>
+            <div class="nav-links">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/generate" class="nav-link active">Generate</a>
+                <a href="/search" class="nav-link">Search</a>
+                <a href="/api" class="nav-link">API</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="search-section">
+            <div class="container container-sm">
+                <div class="section-header">
+                    <h1 class="section-title">Generate Passphrase</h1>
+                    <p class="section-description">Create secure, memorable passphrases</p>
+                </div>
+
+                <!-- Generator Form -->
+                <form id="generator-form" class="search-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="word-count" class="form-label">Number of Words</label>
+                            <select id="word-count" name="count" class="form-input">
+                                <option value="4">4 words (~52 bits)</option>
+                                <option value="5">5 words (~65 bits)</option>
+                                <option value="6" selected>6 words (~77 bits)</option>
+                                <option value="7">7 words (~90 bits)</option>
+                                <option value="8">8 words (~103 bits)</option>
+                                <option value="10">10 words (~129 bits)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="separator" class="form-label">Separator</label>
+                            <select id="separator" name="separator" class="form-input">
+                                <option value="-">Hyphen (-)</option>
+                                <option value="_">Underscore (_)</option>
+                                <option value=".">Period (.)</option>
+                                <option value=" ">Space</option>
+                                <option value="">None</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="capitalize" class="form-label">Capitalize</label>
+                            <select id="capitalize" name="capitalize" class="form-input">
+                                <option value="true" selected>Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg btn-block">
+                        <span class="btn-icon">🎲</span>
+                        Generate Passphrase
+                    </button>
+                </form>
+
+                <!-- Loading State -->
+                <div id="loading" class="loading-state" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <p>Generating passphrase...</p>
+                </div>
+
+                <!-- Result -->
+                <div id="result" class="result-card" style="display: none;">
+                    <div class="result-header">
+                        <h3>Your Passphrase</h3>
+                        <button class="btn btn-secondary" onclick="copyPassphrase()">
+                            Copy
+                        </button>
+                    </div>
+                    <div id="passphrase-display" class="passphrase-display"></div>
+                    <div class="result-info">
+                        <div class="info-row">
+                            <span class="info-label">Words:</span>
+                            <span id="info-words" class="info-value"></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Entropy:</span>
+                            <span id="info-entropy" class="info-value"></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Strength:</span>
+                            <span id="info-strength" class="info-value strength-badge"></span>
+                        </div>
+                    </div>
+                    <div class="result-words">
+                        <h4>Individual Words</h4>
+                        <div id="words-list" class="words-grid"></div>
+                    </div>
+                </div>
+
+                <!-- History -->
+                <div id="history-section" class="history-section" style="display: none;">
+                    <h3>Recent Passphrases</h3>
+                    <p class="history-note">Stored locally in your browser only</p>
+                    <div id="history-list" class="history-list"></div>
+                    <button class="btn btn-secondary" onclick="clearHistory()">Clear History</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <div class="footer-logo">📝</div>
+                <span class="footer-text">{{.SiteTitle}} - Part of apimgr</span>
+            </div>
+            <div class="footer-links">
+                <a href="/api" class="footer-link">API Docs</a>
+                <a href="/healthz" class="footer-link">Status</a>
+                <a href="https://github.com/apimgr" class="footer-link">GitHub</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/static/js/main.js"></script>
+    <script>
+        const history = JSON.parse(localStorage.getItem('passphrase-history') || '[]');
+
+        document.getElementById('generator-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await generatePassphrase();
+        });
+
+        async function generatePassphrase() {
+            const count = document.getElementById('word-count').value;
+            const separator = document.getElementById('separator').value;
+            const capitalize = document.getElementById('capitalize').value;
+
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+
+            loading.style.display = 'flex';
+            result.style.display = 'none';
+
+            try {
+                const url = `/api/v1/passphrase/${count}?separator=${encodeURIComponent(separator)}&capitalize=${capitalize}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                loading.style.display = 'none';
+                result.style.display = 'block';
+
+                document.getElementById('passphrase-display').textContent = data.passphrase;
+                document.getElementById('info-words').textContent = data.word_count;
+
+                const entropy = Math.round(data.word_count * 12.9);
+                document.getElementById('info-entropy').textContent = `~${entropy} bits`;
+
+                const strengthEl = document.getElementById('info-strength');
+                if (entropy >= 100) {
+                    strengthEl.textContent = 'Very Strong';
+                    strengthEl.className = 'info-value strength-badge strength-very-strong';
+                } else if (entropy >= 77) {
+                    strengthEl.textContent = 'Strong';
+                    strengthEl.className = 'info-value strength-badge strength-strong';
+                } else if (entropy >= 50) {
+                    strengthEl.textContent = 'Good';
+                    strengthEl.className = 'info-value strength-badge strength-good';
+                } else {
+                    strengthEl.textContent = 'Weak';
+                    strengthEl.className = 'info-value strength-badge strength-weak';
+                }
+
+                // Display individual words
+                const wordsList = document.getElementById('words-list');
+                wordsList.innerHTML = data.words.map(w => `<span class="word-chip">${w}</span>`).join('');
+
+                // Add to history
+                addToHistory(data.passphrase, data.word_count);
+
+            } catch (error) {
+                loading.style.display = 'none';
+                result.style.display = 'block';
+                document.getElementById('passphrase-display').textContent = 'Error generating passphrase';
+            }
+        }
+
+        function copyPassphrase() {
+            const passphrase = document.getElementById('passphrase-display').textContent;
+            navigator.clipboard.writeText(passphrase).then(() => {
+                const btn = document.querySelector('.result-header .btn');
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = 'Copy', 2000);
+            });
+        }
+
+        function addToHistory(passphrase, wordCount) {
+            history.unshift({ passphrase, wordCount, timestamp: Date.now() });
+            if (history.length > 10) history.pop();
+            localStorage.setItem('passphrase-history', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const historySection = document.getElementById('history-section');
+            const historyList = document.getElementById('history-list');
+
+            if (history.length === 0) {
+                historySection.style.display = 'none';
+                return;
+            }
+
+            historySection.style.display = 'block';
+            historyList.innerHTML = history.map((item, i) => `
+                <div class="history-item">
+                    <code>${item.passphrase}</code>
+                    <span class="history-meta">${item.wordCount} words</span>
+                </div>
+            `).join('');
+        }
+
+        function clearHistory() {
+            history.length = 0;
+            localStorage.removeItem('passphrase-history');
+            renderHistory();
+        }
+
+        // Initial render
+        renderHistory();
+    </script>
+
+    <style>
+        .passphrase-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.25rem;
+            font-weight: 600;
+            padding: var(--space-6);
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-lg);
+            text-align: center;
+            word-break: break-all;
+            color: var(--primary);
+            margin-bottom: var(--space-4);
+        }
+
+        .result-info {
+            display: grid;
+            gap: var(--space-2);
+            padding: var(--space-4);
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-4);
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .info-label {
+            color: var(--text-secondary);
+        }
+
+        .info-value {
+            font-weight: 600;
+        }
+
+        .strength-badge {
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+        }
+
+        .strength-very-strong {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .strength-strong {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .strength-good {
+            background: rgba(234, 179, 8, 0.2);
+            color: #eab308;
+        }
+
+        .strength-weak {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .result-words {
+            padding-top: var(--space-4);
+            border-top: 1px solid var(--border-primary);
+        }
+
+        .result-words h4 {
+            margin-bottom: var(--space-3);
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .words-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-2);
+        }
+
+        .word-chip {
+            padding: var(--space-1) var(--space-3);
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-full);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+        }
+
+        .history-section {
+            margin-top: var(--space-8);
+            padding-top: var(--space-6);
+            border-top: 1px solid var(--border-primary);
+        }
+
+        .history-note {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: var(--space-4);
+        }
+
+        .history-list {
+            display: grid;
+            gap: var(--space-2);
+            margin-bottom: var(--space-4);
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-3);
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+        }
+
+        .history-item code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+        }
+
+        .history-meta {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+    </style>
+</body>
+</html>

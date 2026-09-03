@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.SiteTitle}} - EFF Large Wordlist API</title>
+    <meta name="description" content="EFF Large Wordlist API for generating secure passphrases">
+    <meta name="theme-color" content="#6366f1">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <a href="/" class="nav-brand">
+                <div class="nav-brand-icon">📝</div>
+                <span>{{.SiteTitle}}</span>
+            </a>
+            <div class="nav-links">
+                <a href="/" class="nav-link active">Home</a>
+                <a href="/generate" class="nav-link">Generate</a>
+                <a href="/search" class="nav-link">Search</a>
+                <a href="/api" class="nav-link">API</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container">
+                <div class="hero-content">
+                    <div class="hero-badge">
+                        <span class="hero-badge-dot"></span>
+                        <span>API v1.0 - Live</span>
+                    </div>
+                    <h1 class="hero-title">
+                        EFF <span class="hero-title-gradient">WordList</span>
+                    </h1>
+                    <p class="hero-description">
+                        Generate secure passphrases using the EFF Large Wordlist.
+                        7,776 carefully selected words for creating memorable, high-entropy passwords.
+                    </p>
+                    <div class="hero-actions">
+                        <a href="/generate" class="btn btn-primary btn-lg">
+                            Generate Passphrase
+                        </a>
+                        <a href="/api" class="btn btn-secondary btn-lg">
+                            API Documentation
+                        </a>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="hero-stat">
+                            <div class="hero-stat-value" id="word-count">7,776</div>
+                            <div class="hero-stat-label">Words</div>
+                        </div>
+                        <div class="hero-stat">
+                            <div class="hero-stat-value">12.9</div>
+                            <div class="hero-stat-label">Bits/Word</div>
+                        </div>
+                        <div class="hero-stat">
+                            <div class="hero-stat-value">77+</div>
+                            <div class="hero-stat-label">Bits (6 words)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Features</h2>
+                    <p class="section-description">Everything you need for secure passphrases</p>
+                </div>
+                <div class="features-grid">
+                    <a href="/generate" class="feature-card">
+                        <div class="feature-icon">🎲</div>
+                        <h3 class="feature-title">Passphrase Generator</h3>
+                        <p class="feature-description">Generate secure, memorable passphrases with customizable word count and separators.</p>
+                    </a>
+                    <a href="/search" class="feature-card">
+                        <div class="feature-icon">🔍</div>
+                        <h3 class="feature-title">Word Search</h3>
+                        <p class="feature-description">Search and browse the complete EFF wordlist by prefix, letter, or length.</p>
+                    </a>
+                    <a href="/api" class="feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <h3 class="feature-title">REST API</h3>
+                        <p class="feature-description">Full-featured REST API for integration with your applications and scripts.</p>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quick Start Section -->
+        <section class="search-section">
+            <div class="container container-sm">
+                <div class="section-header">
+                    <h2 class="section-title">Quick Start</h2>
+                    <p class="section-description">Generate passphrases from the command line</p>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Generate 6-word Passphrase</span>
+                        <button class="code-copy" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <div class="code-content">
+                        <pre>curl {{.BaseURL}}/api/v1/passphrase/6.txt</pre>
+                    </div>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Get Random Words (JSON)</span>
+                        <button class="code-copy" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <div class="code-content">
+                        <pre>curl {{.BaseURL}}/api/v1/random/10</pre>
+                    </div>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Custom Separator</span>
+                        <button class="code-copy" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <div class="code-content">
+                        <pre>curl "{{.BaseURL}}/api/v1/passphrase/4.txt?separator=_"</pre>
+                    </div>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Search Words</span>
+                        <button class="code-copy" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <div class="code-content">
+                        <pre>curl {{.BaseURL}}/api/v1/search/pass</pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Live Demo Section -->
+        <section class="features">
+            <div class="container container-sm">
+                <div class="section-header">
+                    <h2 class="section-title">Try It Now</h2>
+                    <p class="section-description">Generate a passphrase instantly</p>
+                </div>
+
+                <div class="result-card">
+                    <div class="result-header">
+                        <h3>Your Passphrase</h3>
+                        <button class="btn btn-secondary" onclick="generatePassphrase()">
+                            🎲 Generate New
+                        </button>
+                    </div>
+                    <div id="passphrase-result" class="passphrase-display">
+                        Click "Generate New" to create a passphrase
+                    </div>
+                    <div class="result-meta" id="passphrase-meta" style="display: none;">
+                        <span id="entropy-display">Entropy: ~77 bits</span>
+                        <button class="btn btn-sm" onclick="copyPassphrase()">Copy</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <div class="footer-logo">📝</div>
+                <span class="footer-text">{{.SiteTitle}} - Part of apimgr</span>
+            </div>
+            <div class="footer-links">
+                <a href="/api" class="footer-link">API Docs</a>
+                <a href="/healthz" class="footer-link">Status</a>
+                <a href="https://github.com/apimgr" class="footer-link">GitHub</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/static/js/main.js"></script>
+    <script>
+        function copyCode(btn) {
+            const code = btn.closest('.code-block').querySelector('pre').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = 'Copy', 2000);
+            });
+        }
+
+        async function generatePassphrase() {
+            const result = document.getElementById('passphrase-result');
+            const meta = document.getElementById('passphrase-meta');
+            const entropy = document.getElementById('entropy-display');
+
+            result.textContent = 'Generating...';
+            result.classList.add('loading');
+
+            try {
+                const response = await fetch('/api/v1/passphrase/6');
+                const data = await response.json();
+
+                result.textContent = data.passphrase;
+                result.classList.remove('loading');
+                meta.style.display = 'flex';
+                entropy.textContent = `Entropy: ~${(data.word_count * 12.9).toFixed(0)} bits (${data.word_count} words)`;
+            } catch (error) {
+                result.textContent = 'Error generating passphrase';
+                result.classList.remove('loading');
+            }
+        }
+
+        function copyPassphrase() {
+            const passphrase = document.getElementById('passphrase-result').textContent;
+            navigator.clipboard.writeText(passphrase).then(() => {
+                const btn = document.querySelector('#passphrase-meta .btn');
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = 'Copy', 2000);
+            });
+        }
+
+        // Load word count
+        fetch('/api/v1/count')
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('word-count').textContent = data.count.toLocaleString();
+            });
+    </script>
+
+    <style>
+        .passphrase-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 600;
+            padding: var(--space-6);
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-lg);
+            text-align: center;
+            word-break: break-all;
+            color: var(--primary);
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .passphrase-display.loading {
+            opacity: 0.6;
+        }
+
+        .result-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: var(--space-4);
+            padding-top: var(--space-4);
+            border-top: 1px solid var(--border-primary);
+        }
+
+        #entropy-display {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+    </style>
+</body>
+</html>

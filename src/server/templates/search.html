@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Words - {{.SiteTitle}}</title>
+    <meta name="description" content="Search and browse the EFF Large Wordlist">
+    <meta name="theme-color" content="#6366f1">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <a href="/" class="nav-brand">
+                <div class="nav-brand-icon">📝</div>
+                <span>{{.SiteTitle}}</span>
+            </a>
+            <div class="nav-links">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/generate" class="nav-link">Generate</a>
+                <a href="/search" class="nav-link active">Search</a>
+                <a href="/api" class="nav-link">API</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="search-section">
+            <div class="container container-sm">
+                <div class="section-header">
+                    <h1 class="section-title">Search Words</h1>
+                    <p class="section-description">Browse and search the EFF Large Wordlist</p>
+                </div>
+
+                <!-- Search Form -->
+                <form id="search-form" class="search-form">
+                    <div class="form-group">
+                        <label for="query" class="form-label">Search Query</label>
+                        <input
+                            type="text"
+                            id="query"
+                            name="query"
+                            class="form-input"
+                            placeholder="Enter word or prefix..."
+                            autocomplete="off"
+                        >
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="mode" class="form-label">Search Mode</label>
+                            <select id="mode" name="mode" class="form-input">
+                                <option value="prefix">Starts with</option>
+                                <option value="contains">Contains</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="limit" class="form-label">Max Results</label>
+                            <select id="limit" name="limit" class="form-input">
+                                <option value="50">50</option>
+                                <option value="100" selected>100</option>
+                                <option value="200">200</option>
+                                <option value="500">500</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg btn-block">
+                        <span class="btn-icon">🔍</span>
+                        Search Words
+                    </button>
+                </form>
+
+                <!-- Browse by Letter -->
+                <div class="browse-section">
+                    <h3>Browse by Letter</h3>
+                    <div id="letter-nav" class="letter-nav">
+                        <!-- Letters loaded dynamically -->
+                    </div>
+                </div>
+
+                <!-- Browse by Length -->
+                <div class="browse-section">
+                    <h3>Browse by Length</h3>
+                    <div class="length-nav">
+                        <button class="length-btn" data-length="3">3 letters</button>
+                        <button class="length-btn" data-length="4">4 letters</button>
+                        <button class="length-btn" data-length="5">5 letters</button>
+                        <button class="length-btn" data-length="6">6 letters</button>
+                        <button class="length-btn" data-length="7">7 letters</button>
+                        <button class="length-btn" data-length="8">8 letters</button>
+                        <button class="length-btn" data-length="9">9 letters</button>
+                        <button class="length-btn" data-length="10">10+ letters</button>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loading" class="loading-state" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <p>Searching...</p>
+                </div>
+
+                <!-- Results -->
+                <div id="results" class="results-section" style="display: none;">
+                    <div class="results-header">
+                        <h3 id="results-title">Results</h3>
+                        <span id="results-count" class="results-count"></span>
+                    </div>
+                    <div id="words-grid" class="words-results-grid"></div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="empty-state" style="display: none;">
+                    <div class="empty-state-icon">🔍</div>
+                    <h3 class="empty-state-title">No words found</h3>
+                    <p class="empty-state-description">Try a different search term</p>
+                </div>
+
+                <!-- Stats -->
+                <div id="stats-section" class="stats-section">
+                    <h3>Wordlist Statistics</h3>
+                    <div id="stats-grid" class="stats-grid">
+                        <!-- Stats loaded dynamically -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <div class="footer-logo">📝</div>
+                <span class="footer-text">{{.SiteTitle}} - Part of apimgr</span>
+            </div>
+            <div class="footer-links">
+                <a href="/api" class="footer-link">API Docs</a>
+                <a href="/healthz" class="footer-link">Status</a>
+                <a href="https://github.com/apimgr" class="footer-link">GitHub</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/static/js/main.js"></script>
+    <script>
+        // Load letters
+        async function loadLetters() {
+            const response = await fetch('/api/v1/letters');
+            const data = await response.json();
+
+            const letterNav = document.getElementById('letter-nav');
+            letterNav.innerHTML = data.letters.map(l =>
+                `<button class="letter-btn" data-letter="${l}">${l.toUpperCase()}</button>`
+            ).join('');
+
+            // Add click handlers
+            letterNav.querySelectorAll('.letter-btn').forEach(btn => {
+                btn.addEventListener('click', () => browseByLetter(btn.dataset.letter));
+            });
+        }
+
+        // Load stats
+        async function loadStats() {
+            const response = await fetch('/api/v1/stats');
+            const data = await response.json();
+
+            document.getElementById('stats-grid').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${data.total_words.toLocaleString()}</div>
+                    <div class="stat-label">Total Words</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${data.min_length}</div>
+                    <div class="stat-label">Min Length</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${data.max_length}</div>
+                    <div class="stat-label">Max Length</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${data.average_length.toFixed(1)}</div>
+                    <div class="stat-label">Avg Length</div>
+                </div>
+            `;
+        }
+
+        // Search
+        document.getElementById('search-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const query = document.getElementById('query').value.trim();
+            if (!query) return;
+
+            const mode = document.getElementById('mode').value;
+            const limit = document.getElementById('limit').value;
+
+            await search(query, mode, limit);
+        });
+
+        async function search(query, mode = 'prefix', limit = 100) {
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const emptyState = document.getElementById('empty-state');
+
+            loading.style.display = 'flex';
+            results.style.display = 'none';
+            emptyState.style.display = 'none';
+
+            try {
+                const url = `/api/v1/search/${encodeURIComponent(query)}?mode=${mode}&limit=${limit}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                loading.style.display = 'none';
+
+                if (data.words && data.words.length > 0) {
+                    results.style.display = 'block';
+                    document.getElementById('results-title').textContent = `Results for "${query}"`;
+                    document.getElementById('results-count').textContent = `${data.count} ${data.limited ? '(limited)' : ''} words`;
+                    displayWords(data.words);
+                } else {
+                    emptyState.style.display = 'flex';
+                }
+            } catch (error) {
+                loading.style.display = 'none';
+                emptyState.style.display = 'flex';
+            }
+        }
+
+        async function browseByLetter(letter) {
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+
+            loading.style.display = 'flex';
+            results.style.display = 'none';
+
+            const response = await fetch(`/api/v1/letter/${letter}`);
+            const data = await response.json();
+
+            loading.style.display = 'none';
+            results.style.display = 'block';
+
+            document.getElementById('results-title').textContent = `Words starting with "${letter.toUpperCase()}"`;
+            document.getElementById('results-count').textContent = `${data.count} words`;
+            displayWords(data.words);
+        }
+
+        async function browseByLength(length) {
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+
+            loading.style.display = 'flex';
+            results.style.display = 'none';
+
+            const response = await fetch(`/api/v1/length/${length}`);
+            const data = await response.json();
+
+            loading.style.display = 'none';
+            results.style.display = 'block';
+
+            document.getElementById('results-title').textContent = `Words with ${length} letters`;
+            document.getElementById('results-count').textContent = `${data.count} words`;
+            displayWords(data.words);
+        }
+
+        function displayWords(words) {
+            const grid = document.getElementById('words-grid');
+            grid.innerHTML = words.map(w =>
+                `<span class="word-result">${w}</span>`
+            ).join('');
+        }
+
+        // Length buttons
+        document.querySelectorAll('.length-btn').forEach(btn => {
+            btn.addEventListener('click', () => browseByLength(btn.dataset.length));
+        });
+
+        // Initialize
+        loadLetters();
+        loadStats();
+    </script>
+
+    <style>
+        .browse-section {
+            margin-top: var(--space-6);
+            padding-top: var(--space-6);
+            border-top: 1px solid var(--border-primary);
+        }
+
+        .browse-section h3 {
+            margin-bottom: var(--space-4);
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .letter-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-2);
+        }
+
+        .letter-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .letter-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .length-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-2);
+        }
+
+        .length-btn {
+            padding: var(--space-2) var(--space-4);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .length-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .results-section {
+            margin-top: var(--space-6);
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-4);
+        }
+
+        .results-count {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .words-results-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-2);
+            max-height: 400px;
+            overflow-y: auto;
+            padding: var(--space-4);
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+        }
+
+        .word-result {
+            padding: var(--space-1) var(--space-3);
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-full);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+        }
+
+        .stats-section {
+            margin-top: var(--space-8);
+            padding-top: var(--space-6);
+            border-top: 1px solid var(--border-primary);
+        }
+
+        .stats-section h3 {
+            margin-bottom: var(--space-4);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: var(--space-4);
+        }
+
+        .stat-card {
+            padding: var(--space-4);
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            margin-top: var(--space-1);
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+    </style>
+</body>
+</html>

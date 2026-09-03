@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation - {{.SiteTitle}}</title>
+    <meta name="description" content="WordList REST API documentation">
+    <meta name="theme-color" content="#6366f1">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <a href="/" class="nav-brand">
+                <div class="nav-brand-icon">📝</div>
+                <span>{{.SiteTitle}}</span>
+            </a>
+            <div class="nav-links">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/generate" class="nav-link">Generate</a>
+                <a href="/search" class="nav-link">Search</a>
+                <a href="/api" class="nav-link active">API</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="search-section">
+            <div class="container">
+                <div class="section-header">
+                    <h1 class="section-title">API Documentation</h1>
+                    <p class="section-description">WordList REST API v1 - EFF Large Wordlist for Passphrases</p>
+                </div>
+
+                <!-- API Overview -->
+                <div class="api-overview">
+                    <div class="api-info-card">
+                        <h3>Base URL</h3>
+                        <code>{{.BaseURL}}/api/v1</code>
+                    </div>
+                    <div class="api-info-card">
+                        <h3>Format</h3>
+                        <p>JSON by default, add <code>.txt</code> extension for plain text</p>
+                    </div>
+                    <div class="api-info-card">
+                        <h3>Authentication</h3>
+                        <p>No authentication required - API is freely available</p>
+                    </div>
+                </div>
+
+                <!-- Endpoints -->
+                <div class="api-section">
+                    <h2>Passphrase Generation</h2>
+
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="method get">GET</span>
+                            <code>/api/v1/passphrase</code>
+                        </div>
+                        <p class="endpoint-desc">Generate a passphrase with 6 words (default)</p>
+                        <div class="endpoint-example">
+                            <h4>Example Response</h4>
+                            <pre><code>{
+  "passphrase": "Correct-Horse-Battery-Staple-Widget-Gizmo",
+  "words": ["Correct", "Horse", "Battery", "Staple", "Widget", "Gizmo"],
+  "word_count": 6,
+  "separator": "-",
+  "capitalized": true
+}</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="method get">GET</span>
+                            <code>/api/v1/passphrase/{count}</code>
+                        </div>
+                        <p class="endpoint-desc">Generate a passphrase with a specific number of words</p>
+                        <div class="params-table">
+                            <h4>Path Parameters</h4>
+                            <table>
+                                <thead>
+                                    <tr><th>Name</th><th>Type</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>count</code></td><td>integer</td><td>Number of words (3-20)</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="params-table">
+                            <h4>Query Parameters</h4>
+                            <table>
+                                <thead>
+                                    <tr><th>Name</th><th>Type</th><th>Default</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>separator</code></td><td>string</td><td>-</td><td>Word separator character</td></tr>
+                                    <tr><td><code>capitalize</code></td><td>boolean</td><td>true</td><td>Capitalize first letter of each word</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="endpoint-example">
+                            <h4>Examples</h4>
+                            <pre><code># 8-word passphrase with underscores
+curl "{{.BaseURL}}/api/v1/passphrase/8?separator=_"
+
+# 4-word passphrase, lowercase
+curl "{{.BaseURL}}/api/v1/passphrase/4?capitalize=false"
+
+# Plain text output
+curl {{.BaseURL}}/api/v1/passphrase/6.txt</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h2>Random Words</h2>
+
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="method get">GET</span>
+                            <code>/api/v1/random</code>
+                        </div>
+                        <p class="endpoint-desc">Get 6 random words (default)</p>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="method get">GET</span>
+                            <code>/api/v1/random/{count}</code>
+                        </div>
+                        <p class="endpoint-desc">Get a specific number of random words</p>
+                        <div class="params-table">
+                            <h4>Path Parameters</h4>
+                            <table>
+                                <thead>
+                                    <tr><th>Name</th><th>Type</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>count</code></td><td>integer</td><td>Number of words (1-100)</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="endpoint-example">
+                            <h4>Example</h4>
+                            <pre><code>curl {{.BaseURL}}/api/v1/random/10</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h2>Search</h2>
+
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="method get">GET</span>
+                            <code>/api/v1/search/{query}</code>
+                        </div>
+                        <p class="endpoint-desc">Search for words by prefix or substring</p>
+                        <div class="params-table">
+                            <h4>Path Parameters</h4>
+                            <table>
+                                <thead>
+                                    <tr><th>Name</th><th>Type</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>query</code></td><td>string</td><td>Search term</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="params-table">
+                            <h4>Query Parameters</h4>
+                            <table>
+                                <thead>
+                                    <tr><th>Name</th><th>Type</th><th>Default</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>mode</code></td><td>string</td><td>prefix</td><td>Search mode: "prefix" or "contains"</td></tr>
+                                    <tr><td><code>limit</code></td><td>integer</td><td>100</td><td>Maximum results (1-1000)</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="endpoint-example">
+                            <h4>Examples</h4>
+                            <pre><code># Words starting with "pass"
+curl {{.BaseURL}}/api/v1/search/pass
+
+# Words containing "word"
+curl "{{.BaseURL}}/api/v1/search/word?mode=contains"</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h2>Browse</h2>
+
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="method get">GET</span>
+                            <code>/api/v1/words</code>
+                        </div>
+                        <p class="endpoint-desc">Get all words (paginated)</p>
+                        <div class="params-table">
+                            <h4>Query Parameters</h4>
+                            <table>
+                                <thead>
+                                    <tr><th>Name</th><th>Type</th><th>Default</th><th>Description</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>page</code></td><td>integer</td><td>1</td><td>Page number</td></tr>
+                                    <tr><td><code>per_page</code></td><td>integer</td><td>100</td><td>Words per page (1-1000)</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="method get">GET</span>
+                            <code>/api/v1/letter/{letter}</code>
+                        </div>
+                        <p class="endpoint-desc">Get all words starting with a specific letter</p>
+                        <div class="endpoint-example">
+                            <h4>Example</h4>
+                            <pre><code>curl {{.BaseURL}}/api/v1/letter/a</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="method get">GET</span>
+                            <code>/api/v1/length/{length}</code>
+                        </div>
+                        <p class="endpoint-desc">Get all words of a specific length</p>
+                        <div class="endpoint-example">
+                            <h4>Example</h4>
+                            <pre><code>curl {{.BaseURL}}/api/v1/length/5</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h2>Statistics</h2>
+
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="method get">GET</span>
+                            <code>/api/v1/stats</code>
+                        </div>
+                        <p class="endpoint-desc">Get wordlist statistics</p>
+                        <div class="endpoint-example">
+                            <h4>Example Response</h4>
+                            <pre><code>{
+  "total_words": 7776,
+  "min_length": 3,
+  "max_length": 9,
+  "average_length": 6.99,
+  "most_common_letter": "s",
+  "most_common_length": 7
+}</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="method get">GET</span>
+                            <code>/api/v1/letters</code>
+                        </div>
+                        <p class="endpoint-desc">Get all unique starting letters</p>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="method get">GET</span>
+                            <code>/api/v1/count</code>
+                        </div>
+                        <p class="endpoint-desc">Get total word count</p>
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h2>Health Check</h2>
+
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="method get">GET</span>
+                            <code>/healthz</code>
+                        </div>
+                        <p class="endpoint-desc">Check service health</p>
+                        <div class="endpoint-example">
+                            <h4>Example Response</h4>
+                            <pre><code>{
+  "status": "healthy",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "word_count": 7776,
+  "service": "wordList",
+  "version": "1.0.0"
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <div class="footer-logo">📝</div>
+                <span class="footer-text">{{.SiteTitle}} - Part of apimgr</span>
+            </div>
+            <div class="footer-links">
+                <a href="/api" class="footer-link">API Docs</a>
+                <a href="/healthz" class="footer-link">Status</a>
+                <a href="https://github.com/apimgr" class="footer-link">GitHub</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/static/js/main.js"></script>
+
+    <style>
+        .api-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-8);
+        }
+
+        .api-info-card {
+            padding: var(--space-4);
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-primary);
+        }
+
+        .api-info-card h3 {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-2);
+        }
+
+        .api-info-card code {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-tertiary);
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+        }
+
+        .api-section {
+            margin-bottom: var(--space-8);
+        }
+
+        .api-section h2 {
+            font-size: 1.25rem;
+            margin-bottom: var(--space-4);
+            padding-bottom: var(--space-2);
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .endpoint-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-lg);
+            padding: var(--space-5);
+            margin-bottom: var(--space-4);
+        }
+
+        .endpoint-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-3);
+        }
+
+        .method {
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius-sm);
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .method.get {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .method.post {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .endpoint-header code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+        }
+
+        .endpoint-desc {
+            color: var(--text-secondary);
+            margin-bottom: var(--space-4);
+        }
+
+        .params-table {
+            margin-bottom: var(--space-4);
+        }
+
+        .params-table h4 {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-2);
+        }
+
+        .params-table table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .params-table th,
+        .params-table td {
+            padding: var(--space-2) var(--space-3);
+            text-align: left;
+            border-bottom: 1px solid var(--border-primary);
+        }
+
+        .params-table th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+        }
+
+        .params-table code {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-tertiary);
+            padding: var(--space-1);
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+        }
+
+        .endpoint-example {
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            padding: var(--space-4);
+        }
+
+        .endpoint-example h4 {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-2);
+        }
+
+        .endpoint-example pre {
+            margin: 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            overflow-x: auto;
+            color: var(--text-primary);
+        }
+    </style>
+</body>
+</html>

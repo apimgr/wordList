@@ -65,3 +65,17 @@
       instead of `go:embed`; `src/words/` should be singular (`src/word/`)
       per Go directory-naming convention. Full detail from the go-lint
       agent run on 2026-09-17.
+
+- [ ] **PART 12 "Trusted Proxies" client-IP/FQDN gate not implemented.**
+      `chi/v5` v5.3.0 deprecated `middleware.RealIP` (IP-spoofing risk,
+      GHSA-3fxj-6jh8-hvhx) as part of the govulncheck fix on 2026-09-17;
+      it was removed from `src/server/server.go` rather than replaced,
+      since implementing the full `trusted_proxies`-gated resolution
+      chain (`X-Forwarded-*` trust gate, original-peer preservation,
+      `BuildURL(r, ...)`) described in AI.md PART 12 → "Trusted Proxies"
+      and PART 8 → "Resolution Order" is a real feature, out of scope for
+      that CI fix. Until built, the server falls back to `r.RemoteAddr`
+      for logging (correct default for a no-trusted-proxy deployment per
+      AI.md line 16044, but `{fqdn}`/`{proto}`/`{port}` reverse-proxy
+      header detection and client-IP-based rate limiting/blocklists/GeoIP
+      described elsewhere in AI.md are not implemented at all).

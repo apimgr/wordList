@@ -37,7 +37,6 @@ func New(cfg *config.Config, version string) *http.Server {
 	r := chi.NewRouter()
 
 	// Middleware
-	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Compress(5))

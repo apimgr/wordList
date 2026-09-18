@@ -20,8 +20,11 @@ import (
 )
 
 var (
-	Version   = "1.0.0"
-	BuildTime = "unknown"
+	Version      = "1.0.0"
+	BuildTime    = "unknown"
+	CommitID     = "unknown"
+	BuildEpoch   = "0"
+	OfficialSite = ""
 )
 
 func main() {

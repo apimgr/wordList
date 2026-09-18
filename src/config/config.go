@@ -24,18 +24,6 @@ type ServerConfig struct {
 	Mode         string        `yaml:"mode"`
 	UpdateBranch string        `yaml:"update_branch"`
 	Logging      LoggingConfig `yaml:"logging"`
-	Admin        AdminConfig   `yaml:"admin"`
-	Session      SessionConfig `yaml:"session"`
-}
-
-type AdminConfig struct {
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
-	APIToken string `yaml:"api_token"`
-}
-
-type SessionConfig struct {
-	Timeout int `yaml:"timeout"`
 }
 
 type LoggingConfig struct {
@@ -72,14 +60,6 @@ func defaultConfig() *Config {
 				AccessFormat: "apache",
 				Level:        "info",
 			},
-			Admin: AdminConfig{
-				Username: "admin",
-				Password: "",
-				APIToken: "",
-			},
-			Session: SessionConfig{
-				Timeout: 3600,
-			},
 		},
 		WebUI: WebUIConfig{
 			Theme:   "dark",
@@ -88,7 +68,7 @@ func defaultConfig() *Config {
 		},
 		WebRobots: WebRobotsConfig{
 			Allow: []string{"/", "/api"},
-			Deny:  []string{"/admin"},
+			Deny:  []string{},
 		},
 		WebSecurity: WebSecurityConfig{
 			Admin: "security@wordlist.apimgr.us",

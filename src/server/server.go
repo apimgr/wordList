@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/apimgr/wordList/src/admin"
 	"github.com/apimgr/wordList/src/config"
 	"github.com/apimgr/wordList/src/words"
 	"github.com/go-chi/chi/v5"
@@ -49,19 +48,6 @@ func New(cfg *config.Config, version string) *http.Server {
 		AllowCredentials: false,
 		MaxAge:           300,
 	}))
-
-	// Initialize admin handler
-	adminHandler := admin.NewHandler(
-		cfg.Server.Admin.Username,
-		cfg.Server.Admin.Password,
-		cfg.Server.Admin.APIToken,
-		cfg.Server.Session.Timeout,
-		false, // SSL enabled
-		version,
-	)
-
-	// Register admin routes
-	adminHandler.RegisterRoutes(r)
 
 	// Static files
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))

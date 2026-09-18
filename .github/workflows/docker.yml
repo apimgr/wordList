@@ -18,7 +18,10 @@ concurrency:
 env:
   PROJECT_NAME: wordList
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  # Hardcoded lowercase — github.repository is "apimgr/wordList" and image
+  # registry names must be lowercase (buildx: "repository name must be
+  # lowercase"), so the expression can't be used directly here.
+  IMAGE_NAME: apimgr/wordlist
 
 jobs:
   build-standard:

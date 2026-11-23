@@ -1,12 +1,14 @@
 package words
 
 import (
+	"crypto/rand"
 	"embed"
 	"encoding/json"
-	"math/rand"
+	"fmt"
+	"math"
+	"math/big"
 	"sort"
 	"strings"
-	"time"
 )
 
 //go:embed data/words.json
@@ -17,7 +19,8 @@ type WordData struct {
 }
 
 var wordList []string
-var rng *rand.Rand
+var diceWords map[string]string
+var wordDice map[string]string
 
 // Load loads the word list from embedded data
 func Load() error {
@@ -31,17 +34,37 @@ func Load() error {
 		return err
 	}
 
-	// Filter out the "end" placeholder
-	wordList = make([]string, 0, len(wd.Words))
-	for _, w := range wd.Words {
-		if w != "end" && w != "" {
-			wordList = append(wordList, w)
-		}
+	if len(wd.Words) == 0 {
+		return fmt.Errorf("embedded EFF word list is empty")
 	}
 
-	// Initialize random with time seed
-	rng = rand.New(rand.NewSource(time.Now().UnixNano()))
+	nextWords := make([]string, 0, len(wd.Words))
+	for _, word := range wd.Words {
+		if word == "end" || word == "" {
+			continue
+		}
+		if word != strings.ToLower(word) || strings.TrimSpace(word) != word {
+			return fmt.Errorf("invalid word entry %q", word)
+		}
+		nextWords = append(nextWords, word)
+	}
+	if len(nextWords) != 7776 {
+		return fmt.Errorf("EFF large word list has %d words; expected 7776", len(nextWords))
+	}
 
+	nextDiceWords := make(map[string]string, len(nextWords))
+	nextWordDice := make(map[string]string, len(nextWords))
+	for index, word := range nextWords {
+		if index > 0 && nextWords[index-1] >= word {
+			return fmt.Errorf("EFF word list is not strictly sorted at index %d", index)
+		}
+		code := diceCode(index)
+		nextDiceWords[code] = word
+		nextWordDice[word] = code
+	}
+	wordList = nextWords
+	diceWords = nextDiceWords
+	wordDice = nextWordDice
 	return nil
 }
 
@@ -52,49 +75,102 @@ func Count() int {
 
 // All returns all words
 func All() []string {
-	return wordList
+	return append([]string(nil), wordList...)
 }
 
-// Random returns n random words
+// ByDiceCode returns the EFF word mapped to a five-dice code from 11111 to 66666.
+func ByDiceCode(code string) (string, bool) {
+	if len(code) != 5 {
+		return "", false
+	}
+	for _, digit := range code {
+		if digit < '1' || digit > '6' {
+			return "", false
+		}
+	}
+	word, ok := diceWords[code]
+	return word, ok
+}
+
+// DiceCodeByWord returns the EFF dice code for an exact word-list entry.
+func DiceCodeByWord(word string) (string, bool) {
+	code, ok := wordDice[strings.ToLower(word)]
+	return code, ok
+}
+
+func diceCode(index int) string {
+	var code [5]byte
+	for position := len(code) - 1; position >= 0; position-- {
+		code[position] = byte(index%6) + '1'
+		index /= 6
+	}
+	return string(code[:])
+}
+
+// Random returns n words selected independently with the operating-system CSPRNG.
 func Random(n int) []string {
+	result, _ := RandomSecure(n)
+	return result
+}
+
+// RandomSecure returns n words using crypto/rand with replacement.
+func RandomSecure(n int) ([]string, error) {
 	if n <= 0 {
 		n = 1
+	}
+	if len(wordList) == 0 {
+		return nil, fmt.Errorf("word list is not loaded")
 	}
 	if n > len(wordList) {
 		n = len(wordList)
 	}
-
-	// Create a copy and shuffle
-	shuffled := make([]string, len(wordList))
-	copy(shuffled, wordList)
-
-	rng.Shuffle(len(shuffled), func(i, j int) {
-		shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
-	})
-
-	return shuffled[:n]
+	result := make([]string, n)
+	max := big.NewInt(int64(len(wordList)))
+	for i := range result {
+		index, err := rand.Int(rand.Reader, max)
+		if err != nil {
+			return nil, fmt.Errorf("read secure random word index: %w", err)
+		}
+		result[i] = wordList[index.Int64()]
+	}
+	return result, nil
 }
 
-// Passphrase generates a passphrase with n words
+// Passphrase generates a passphrase using the OS CSPRNG. Empty indicates a random source error.
 func Passphrase(n int, separator string, capitalize bool) string {
-	if n <= 0 {
-		n = 6
-	}
 	if separator == "" {
 		separator = "-"
 	}
+	result, _ := PassphraseSecure(n, separator, capitalize)
+	return result
+}
 
-	words := Random(n)
-
+// PassphraseSecure generates a passphrase and reports CSPRNG failures to its caller.
+func PassphraseSecure(n int, separator string, capitalize bool) (string, error) {
+	if n <= 0 {
+		n = 6
+	}
+	if n > 20 {
+		return "", fmt.Errorf("passphrase word count %d exceeds maximum 20", n)
+	}
+	selected, err := RandomSecure(n)
+	if err != nil {
+		return "", err
+	}
 	if capitalize {
-		for i, w := range words {
-			if len(w) > 0 {
-				words[i] = strings.ToUpper(w[:1]) + w[1:]
-			}
+		for i, word := range selected {
+			selected[i] = strings.ToUpper(word[:1]) + word[1:]
 		}
 	}
+	return strings.Join(selected, separator), nil
+}
 
-	return strings.Join(words, separator)
+// EntropyBits reports the theoretical entropy of independent selections from the loaded list.
+func EntropyBits(n int) float64 {
+	if n <= 0 || len(wordList) == 0 {
+		return 0
+	}
+	return float64(n) * math.Log2(float64(len(wordList)))
 }
 
 // Search returns words matching a prefix

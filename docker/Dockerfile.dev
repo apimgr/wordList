@@ -1,0 +1,20 @@
+FROM casjaysdev/go:latest AS builder
+ARG TARGETARCH
+ARG COMMIT_ID=N/A
+ARG BUILD_EPOCH=0
+WORKDIR /build
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN mkdir -p /out && CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} GOFLAGS=-buildvcs=false go build -gcflags=all=-N -l -trimpath -ldflags "-X main.CommitID=${COMMIT_ID} -X main.BuildEpoch=${BUILD_EPOCH}" -o /out/wordList ./src
+
+FROM alpine:3.22
+RUN apk add --no-cache bash ca-certificates curl su-exec tini && addgroup -S wordlist && adduser -S -G wordlist wordlist && mkdir -p /config/wordList /data/wordList && chown -R wordlist:wordlist /config /data
+COPY --from=builder /out/wordList /usr/local/bin/wordList
+COPY docker/rootfs/ /
+RUN chmod 755 /usr/local/bin/wordList /usr/local/bin/entrypoint.sh
+ENV MODE=development TZ=UTC
+EXPOSE 80
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD curl --fail --silent http://127.0.0.1:80/api/v1/server/healthz || exit 1
+USER root
+ENTRYPOINT ["tini", "--", "/usr/local/bin/entrypoint.sh"]

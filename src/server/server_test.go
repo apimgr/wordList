@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/apimgr/wordList/src/config"
 	"github.com/apimgr/wordList/src/words"
@@ -44,7 +45,7 @@ func doRequest(t *testing.T, h http.Handler, method, path string) *httptest.Resp
 
 func TestHealthHandler(t *testing.T) {
 	h := testServer(t)
-	rec := doRequest(t, h, http.MethodGet, "/healthz")
+	rec := doRequest(t, h, http.MethodGet, "/api/v1/server/healthz")
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d", rec.Code)
 	}
@@ -54,6 +55,9 @@ func TestHealthHandler(t *testing.T) {
 	}
 	if body["status"] != "healthy" {
 		t.Errorf("status field = %v", body["status"])
+	}
+	if rec.Header().Get("X-Content-Type-Options") != "nosniff" || rec.Header().Get("Content-Security-Policy") == "" {
+		t.Error("security headers are missing")
 	}
 }
 
@@ -93,14 +97,14 @@ func TestManifestHandler(t *testing.T) {
 	}
 }
 
-func TestSwaggerRedirect(t *testing.T) {
+func TestOpenAPISpec(t *testing.T) {
 	h := testServer(t)
-	rec := doRequest(t, h, http.MethodGet, "/swagger")
-	if rec.Code != http.StatusFound {
+	rec := doRequest(t, h, http.MethodGet, "/api/v1/server/swagger")
+	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d", rec.Code)
 	}
-	if loc := rec.Header().Get("Location"); loc != "/api" {
-		t.Errorf("Location = %q", loc)
+	if !strings.Contains(rec.Body.String(), `"openapi": "3.0.3"`) {
+		t.Errorf("response is not an OpenAPI document: %q", rec.Body.String())
 	}
 }
 
@@ -214,12 +218,12 @@ func TestAPIAllWordsHandler(t *testing.T) {
 func TestAPIByLetterHandler(t *testing.T) {
 	h := testServer(t)
 
-	rec := doRequest(t, h, http.MethodGet, "/api/v1/letter/a")
+	rec := doRequest(t, h, http.MethodGet, "/api/v1/letters/a")
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d", rec.Code)
 	}
 
-	rec = doRequest(t, h, http.MethodGet, "/api/v1/letter/a.txt")
+	rec = doRequest(t, h, http.MethodGet, "/api/v1/letters/a.txt")
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d", rec.Code)
 	}
@@ -228,22 +232,18 @@ func TestAPIByLetterHandler(t *testing.T) {
 func TestAPIByLengthHandler(t *testing.T) {
 	h := testServer(t)
 
-	rec := doRequest(t, h, http.MethodGet, "/api/v1/length/5")
+	rec := doRequest(t, h, http.MethodGet, "/api/v1/lengths/5")
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d", rec.Code)
 	}
 
-	rec = doRequest(t, h, http.MethodGet, "/api/v1/length/notanumber")
-	var body struct {
-		Error string `json:"error"`
-	}
-	json.Unmarshal(rec.Body.Bytes(), &body)
-	if body.Error == "" {
-		t.Error("expected error for invalid length")
+	rec = doRequest(t, h, http.MethodGet, "/api/v1/lengths/notanumber")
+	if !strings.Contains(rec.Body.String(), "length must be between 1 and 100") {
+		t.Errorf("expected length validation error, got %q", rec.Body.String())
 	}
 
-	rec = doRequest(t, h, http.MethodGet, "/api/v1/length/notanumber.txt")
-	if !strings.Contains(rec.Body.String(), "Invalid length") {
+	rec = doRequest(t, h, http.MethodGet, "/api/v1/lengths/notanumber.txt")
+	if !strings.Contains(rec.Body.String(), "length must be between 1 and 100") {
 		t.Errorf("expected invalid length text, got %q", rec.Body.String())
 	}
 }
@@ -270,10 +270,68 @@ func TestAPISearchMissingQuery(t *testing.T) {
 
 func TestWebPageHandlers(t *testing.T) {
 	h := testServer(t)
-	for _, path := range []string{"/", "/generate", "/search", "/api"} {
+	for _, path := range []string{"/", "/generate", "/search", "/server/docs/swagger", "/server/docs/graphql", "/server/about", "/server/help", "/server/privacy", "/server/terms", "/server/healthz"} {
 		rec := doRequest(t, h, http.MethodGet, path)
 		if rec.Code != http.StatusOK {
 			t.Errorf("%s status = %d", path, rec.Code)
 		}
+	}
+}
+
+
+func TestDiceCodeAPI(t *testing.T) {
+	h := testServer(t)
+	rec := doRequest(t, h, http.MethodGet, "/api/v1/dice/11111")
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), `"word":"abacus"`) {
+		t.Fatalf("dice lookup response = %d %q", rec.Code, rec.Body.String())
+	}
+	rec = doRequest(t, h, http.MethodGet, "/api/v1/dice/77777")
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("invalid dice code status = %d", rec.Code)
+	}
+}
+
+func TestGenerateFormAndPrivacyHeaders(t *testing.T) {
+	h := testServer(t)
+	req := httptest.NewRequest(http.MethodPost, "/generate", strings.NewReader("count=4&separator=&capitalize=false"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "bits of entropy") {
+		t.Fatalf("generation response = %d %q", rec.Code, rec.Body.String())
+	}
+	if rec.Header().Get("Cache-Control") != "no-store" || rec.Header().Get("Referrer-Policy") != "no-referrer" {
+		t.Error("generated passphrase response is missing privacy headers")
+	}
+}
+
+func TestGraphQLAndServiceWorkerRoutes(t *testing.T) {
+	h := testServer(t)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/server/graphql", strings.NewReader(`{"query":"{ wordCount }"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), `"wordCount":7776`) {
+		t.Fatalf("GraphQL response = %d %q", rec.Code, rec.Body.String())
+	}
+	rec = doRequest(t, h, http.MethodGet, "/sw.js")
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "CACHE_NAME") {
+		t.Fatalf("service worker response = %d", rec.Code)
+	}
+}
+
+func TestRateLimitMiddleware(t *testing.T) {
+	handler := newRateLimitMiddleware(1, time.Minute)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	first := httptest.NewRecorder()
+	handler.ServeHTTP(first, httptest.NewRequest(http.MethodGet, "/", nil))
+	if first.Code != http.StatusNoContent {
+		t.Fatalf("first request status = %d", first.Code)
+	}
+	second := httptest.NewRecorder()
+	handler.ServeHTTP(second, httptest.NewRequest(http.MethodGet, "/", nil))
+	if second.Code != http.StatusTooManyRequests || second.Header().Get("Retry-After") == "" {
+		t.Fatalf("second request status = %d", second.Code)
 	}
 }

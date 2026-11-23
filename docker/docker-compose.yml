@@ -1,25 +1,37 @@
 name: wordList
 
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
 services:
   wordList:
-    image: ghcr.io/apimgr/wordList:latest
-    container_name: wordList
+    image: ghcr.io/apimgr/wordlist:latest
+    pull_policy: always
     restart: unless-stopped
     environment:
-      # Hardcoded with sane defaults - NO .env files
-      - MODE=production
-      - TZ=America/New_York
-      # ENABLE_TOR=true is default, no need to specify
+      MODE: production
+      TZ: UTC
+      PORT: "80"
+      CONFIG_DIR: /config/wordList
+      DATA_DIR: /data/wordList
     ports:
-      # Production: bound to Docker bridge only
       - "172.17.0.1:64580:80"
     volumes:
-      - ./rootfs/config/wordList:/config
-      - ./rootfs/data/wordList:/data
+      - ./volumes/config:/config
+      - ./volumes/data:/data
     networks:
       - wordList
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:80/api/v1/server/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 networks:
   wordList:
     name: wordList
-    external: false

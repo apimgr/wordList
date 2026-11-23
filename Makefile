@@ -1,124 +1,46 @@
-# ============================================
-# Variables
-# ============================================
-PROJECTNAME = wordList
-PROJECTORG = apimgr
+PROJECT_NAME := $(shell git remote get-url origin 2>/dev/null | sed -E 's|.*/([^/]+)(\.git)?$$|\1|' || basename "$$(pwd)")
+PROJECT_ORG := $(shell git remote get-url origin 2>/dev/null | sed -E 's|.*/([^/]+)/[^/]+(\.git)?$$|\1|' || basename "$$(dirname "$$(pwd)")")
+VERSION := $(shell cat release.txt 2>/dev/null || echo "$${VERSION:-devel}")
+COMMIT_ID := $(shell git rev-parse --short=7 HEAD 2>/dev/null || echo N/A)
+BUILD_EPOCH := $(shell date -u +%s)
+BUILD_DATE := $(shell date -u -d @$(BUILD_EPOCH) +"%Y-%m-%dT%H:%M:%SZ")
+OFFICIAL_SITE := $(shell [ -f site.txt ] && cat site.txt || echo "$${OFFICIAL_SITE:-}")
+REGISTRY ?= ghcr.io/$(PROJECT_ORG)/wordlist
+GO_CACHE ?= $(HOME)/go/pkg/mod
+GO_BUILD ?= $(HOME)/.cache/go-build/$(PROJECT_NAME)
+PLATFORMS ?= linux/amd64,linux/arm64,darwin/amd64,darwin/arm64,windows/amd64,windows/arm64,freebsd/amd64,freebsd/arm64
+LDFLAGS := -s -w -X main.Version=$(VERSION) -X main.CommitID=$(COMMIT_ID) -X main.BuildEpoch=$(BUILD_EPOCH) -X main.OfficialSite=$(OFFICIAL_SITE)
+GO_DOCKER := docker run --rm -v $(PWD):/app -v $(GO_CACHE):/go/pkg/mod -v $(GO_BUILD):/go/cache -w /app -e CGO_ENABLED=0 -e GOFLAGS=-buildvcs=false casjaysdev/go:latest
 
-# VERSION can be overridden: make build VERSION=1.2.3
-# Otherwise, read from release.txt or default to 0.0.1
-VERSION ?= $(shell cat release.txt 2>/dev/null || echo "0.0.1")
+.PHONY: dev local build test release docker clean
+.DEFAULT_GOAL := dev
 
-COMMIT = $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
-BUILD_DATE = $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
-LDFLAGS = -ldflags "-X main.Version=$(VERSION) -X main.Commit=$(COMMIT) -X main.BuildDate=$(BUILD_DATE) -w -s"
+dev:
+	@mkdir -p "$${TMPDIR:-/tmp}/$(PROJECT_ORG)" $(GO_CACHE) $(GO_BUILD)
+	@OUT=$$(mktemp -d "$${TMPDIR:-/tmp}/$(PROJECT_ORG)/wordList-XXXXXX") && docker run --rm -v $(PWD):/app -v $(GO_CACHE):/go/pkg/mod -v $(GO_BUILD):/go/cache -v "$$OUT:/out" -w /app -e CGO_ENABLED=0 -e GOFLAGS=-buildvcs=false casjaysdev/go:latest sh -c 'go build -buildvcs=false -trimpath -ldflags "$(LDFLAGS)" -o /out/wordList ./src && go build -buildvcs=false -trimpath -ldflags "-X main.Version=$(VERSION)" -o /out/wordList-cli ./src/client' && echo "Built binaries in $$OUT"
 
-# Detect host OS and architecture
-HOSTOS := $(shell go env GOOS)
-HOSTARCH := $(shell go env GOARCH)
+local:
+	@mkdir -p binaries $(GO_CACHE) $(GO_BUILD)
+	@$(GO_DOCKER) sh -c 'go build -buildvcs=false -trimpath -ldflags "$(LDFLAGS)" -o binaries/wordList ./src && go build -buildvcs=false -trimpath -ldflags "-X main.Version=$(VERSION)" -o binaries/wordList-cli ./src/client'
 
-# ============================================
-# Main Targets
-# ============================================
-.PHONY: build releases test docker clean
-.DEFAULT_GOAL := build
-
-# Build all binaries for all platforms
 build:
-	@echo "Building $(PROJECTNAME) $(VERSION) for all platforms..."
-	@mkdir -p binaries
-	@docker run --rm -v $$(pwd):/workspace -w /workspace golang:alpine sh -c ' \
-		apk add --no-cache git binutils > /dev/null 2>&1 && \
-		echo "  → Linux AMD64" && \
-		GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build $(LDFLAGS) -o binaries/$(PROJECTNAME)-linux-amd64 ./src && \
-		strip binaries/$(PROJECTNAME)-linux-amd64 2>/dev/null || true && \
-		echo "  → Linux ARM64" && \
-		GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build $(LDFLAGS) -o binaries/$(PROJECTNAME)-linux-arm64 ./src && \
-		echo "  → Windows AMD64" && \
-		GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build $(LDFLAGS) -o binaries/$(PROJECTNAME)-windows-amd64.exe ./src && \
-		echo "  → Windows ARM64" && \
-		GOOS=windows GOARCH=arm64 CGO_ENABLED=0 go build $(LDFLAGS) -o binaries/$(PROJECTNAME)-windows-arm64.exe ./src && \
-		echo "  → macOS AMD64" && \
-		GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build $(LDFLAGS) -o binaries/$(PROJECTNAME)-macos-amd64 ./src && \
-		echo "  → macOS ARM64" && \
-		GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build $(LDFLAGS) -o binaries/$(PROJECTNAME)-macos-arm64 ./src && \
-		echo "  → FreeBSD AMD64" && \
-		GOOS=freebsd GOARCH=amd64 CGO_ENABLED=0 go build $(LDFLAGS) -o binaries/$(PROJECTNAME)-bsd-amd64 ./src && \
-		strip binaries/$(PROJECTNAME)-bsd-amd64 2>/dev/null || true && \
-		echo "  → FreeBSD ARM64" && \
-		GOOS=freebsd GOARCH=arm64 CGO_ENABLED=0 go build $(LDFLAGS) -o binaries/$(PROJECTNAME)-bsd-arm64 ./src && \
-		echo "  → Host ($(HOSTOS)/$(HOSTARCH))" && \
-		GOOS=$(HOSTOS) GOARCH=$(HOSTARCH) CGO_ENABLED=0 go build $(LDFLAGS) -o binaries/$(PROJECTNAME) ./src && \
-		(ldd binaries/$(PROJECTNAME) 2>&1 | grep -q musl && strip binaries/$(PROJECTNAME) 2>/dev/null || true) \
-	'
-	@echo ""
-	@echo "✓ Built $(PROJECTNAME) $(VERSION)"
-	@echo "  Binaries: $$(ls -1 binaries/ | wc -l) files"
-	@echo "  Host binary: binaries/$(PROJECTNAME)"
+	@mkdir -p binaries $(GO_CACHE) $(GO_BUILD)
+	@$(GO_DOCKER) go mod download
+	@set -eu; for item in $$(echo "$(PLATFORMS)" | tr ',' ' '); do os=$${item%/*}; arch=$${item#*/}; ext=; [ "$$os" != windows ] || ext=.exe; $(GO_DOCKER) sh -c "GOOS=$$os GOARCH=$$arch go build -buildvcs=false -trimpath -ldflags \"$(LDFLAGS)\" -o binaries/wordList-$$os-$$arch$$ext ./src && GOOS=$$os GOARCH=$$arch go build -buildvcs=false -trimpath -ldflags \"-X main.Version=$(VERSION)\" -o binaries/wordList-cli-$$os-$$arch$$ext ./src/client"; done
+	@$(MAKE) local
 
-# Create GitHub release
-release:
-	@echo "Creating GitHub release $(VERSION)..."
-	@mkdir -p releases
-	@echo "Copying platform binaries to releases/..."
-	@cp binaries/$(PROJECTNAME)-linux-amd64 releases/ 2>/dev/null || { echo "Error: Build first with 'make build'"; exit 1; }
-	@cp binaries/$(PROJECTNAME)-linux-arm64 releases/
-	@cp binaries/$(PROJECTNAME)-windows-amd64.exe releases/
-	@cp binaries/$(PROJECTNAME)-windows-arm64.exe releases/
-	@cp binaries/$(PROJECTNAME)-macos-amd64 releases/
-	@cp binaries/$(PROJECTNAME)-macos-arm64 releases/
-	@cp binaries/$(PROJECTNAME)-bsd-amd64 releases/
-	@cp binaries/$(PROJECTNAME)-bsd-arm64 releases/
-	@echo "Creating source archives (no VCS files)..."
-	@git archive --format=tar.gz --prefix=$(PROJECTNAME)-$(VERSION)/ HEAD -o releases/$(PROJECTNAME)-$(VERSION)-src.tar.gz
-	@git archive --format=zip --prefix=$(PROJECTNAME)-$(VERSION)/ HEAD -o releases/$(PROJECTNAME)-$(VERSION)-src.zip
-	@echo "Deleting existing release if exists..."
-	@gh release delete $(VERSION) -y 2>/dev/null || true
-	@git tag -d $(VERSION) 2>/dev/null || true
-	@echo "Creating GitHub release $(VERSION)..."
-	@gh release create $(VERSION) ./releases/* \
-		--title "$(PROJECTNAME) $(VERSION)" \
-		--notes "Release $(VERSION)\n\nCommit: $(COMMIT)\nBuilt: $(BUILD_DATE)\n\n**Binaries**: 8 platforms (Linux, macOS, Windows, BSD - amd64/arm64)\n**Source**: tar.gz and zip archives (no VCS files)"
-	@echo "✓ Release $(VERSION) created with binaries and source archives"
-	@echo "Auto-incrementing version in release.txt..."
-	@echo "$(VERSION)" | awk -F. '{printf "%d.%d.%d\n", $$1, $$2, $$3+1}' > release.txt
-	@echo "✓ Version incremented: $(VERSION) → $$(cat release.txt)"
-
-# Run all tests
 test:
-	@echo "Running tests..."
-	@docker run --rm -v $$(pwd):/workspace -w /workspace golang:alpine sh -c ' \
-		go test -v -race -timeout 5m ./... \
-	'
-	@echo "✓ All tests passed"
+	@mkdir -p $(GO_CACHE) $(GO_BUILD)
+	@$(GO_DOCKER) sh -c 'mkdir -p "/tmp/$(PROJECT_ORG)" && COVDIR=$$(mktemp -d "/tmp/$(PROJECT_ORG)/wordList-XXXXXX") && trap "rm -rf \"$$COVDIR\"" EXIT && go vet ./... && go test -coverprofile="$$COVDIR/coverage.out" ./... && COVERAGE=$$(go tool cover -func="$$COVDIR/coverage.out" | awk "/^total:/ {print \$$3}" | sed "s/%//") && echo "Coverage: $$COVERAGE%" && awk -v coverage="$$COVERAGE" "BEGIN {exit !(coverage + 0 >= 60)}"'
 
-# Build and push multi-platform Docker images (release)
+release: build
+	@mkdir -p releases
+	@cp binaries/wordList-* binaries/wordList-cli-* releases/
+	@tar --exclude=.git --exclude=binaries --exclude=releases -czf releases/wordList-$(VERSION)-source.tar.gz .
+	@cd releases && sha256sum wordList-* > sha256.txt
+
 docker:
-	@echo "Building multi-platform Docker images..."
-	@docker buildx build \
-		--platform linux/amd64,linux/arm64 \
-		--build-arg VERSION=$(VERSION) \
-		--build-arg COMMIT=$(COMMIT) \
-		--build-arg BUILD_DATE=$(BUILD_DATE) \
-		-t ghcr.io/$(PROJECTORG)/$(PROJECTNAME):latest \
-		-t ghcr.io/$(PROJECTORG)/$(PROJECTNAME):$(VERSION) \
-		--push \
-		.
-	@echo "✓ Docker images pushed to ghcr.io/$(PROJECTORG)/$(PROJECTNAME):$(VERSION)"
+	@docker buildx build -f docker/Dockerfile --platform linux/amd64,linux/arm64 --push --build-arg VERSION=$(VERSION) --build-arg BUILD_DATE=$(BUILD_DATE) --build-arg BUILD_EPOCH=$(BUILD_EPOCH) --build-arg COMMIT_ID=$(COMMIT_ID) -t $(REGISTRY):$(VERSION) -t $(REGISTRY):latest .
 
-# Build Docker image for development (local only, not pushed)
-docker-dev:
-	@echo "Building development Docker image..."
-	@docker build \
-		--build-arg VERSION=$(VERSION)-dev \
-		--build-arg COMMIT=$(COMMIT) \
-		--build-arg BUILD_DATE=$(BUILD_DATE) \
-		-t $(PROJECTNAME):dev \
-		.
-	@echo "✓ Docker development image built: $(PROJECTNAME):dev"
-
-# Clean build artifacts
 clean:
-	@echo "Cleaning build artifacts..."
-	@rm -rf binaries/ releases/ coverage.out
-	@go clean
-	@echo "✓ Clean complete"
+	@rm -rf binaries releases

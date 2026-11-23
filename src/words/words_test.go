@@ -159,3 +159,35 @@ func TestLetters(t *testing.T) {
 		seen[l] = true
 	}
 }
+
+
+func TestDiceCodeMapping(t *testing.T) {
+	if word, ok := ByDiceCode("11111"); !ok || word != "abacus" {
+		t.Fatalf("ByDiceCode(11111) = %q, %v", word, ok)
+	}
+	if word, ok := ByDiceCode("66666"); !ok || word != "zoom" {
+		t.Fatalf("ByDiceCode(66666) = %q, %v", word, ok)
+	}
+	if code, ok := DiceCodeByWord("abacus"); !ok || code != "11111" {
+		t.Fatalf("DiceCodeByWord(abacus) = %q, %v", code, ok)
+	}
+	for _, invalid := range []string{"", "00000", "1111", "77777"} {
+		if _, ok := ByDiceCode(invalid); ok {
+			t.Errorf("ByDiceCode(%q) unexpectedly found a mapping", invalid)
+		}
+	}
+}
+
+func TestSecureGenerationAndEntropy(t *testing.T) {
+	generated, err := RandomSecure(8)
+	if err != nil || len(generated) != 8 {
+		t.Fatalf("RandomSecure(8) = %d words, %v", len(generated), err)
+	}
+	passphrase, err := PassphraseSecure(3, "", false)
+	if err != nil || strings.Contains(passphrase, "-") || len(strings.Fields(passphrase)) != 1 {
+		t.Fatalf("PassphraseSecure with no separator = %q, %v", passphrase, err)
+	}
+	if got := EntropyBits(6); got < 77 || got > 78 {
+		t.Errorf("EntropyBits(6) = %.2f, expected approximately 77.5", got)
+	}
+}

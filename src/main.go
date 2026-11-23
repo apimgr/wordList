@@ -30,7 +30,9 @@ var (
 func main() {
 	// CLI flags
 	showHelp := flag.Bool("help", false, "Show help")
+	flag.BoolVar(showHelp, "h", false, "Show help")
 	showVersion := flag.Bool("version", false, "Show version")
+	flag.BoolVar(showVersion, "v", false, "Show version")
 	showStatus := flag.Bool("status", false, "Show service status")
 	configDir := flag.String("config", "", "Configuration directory")
 	dataDir := flag.String("data", "", "Data directory")
@@ -41,8 +43,21 @@ func main() {
 	updateCmd := flag.String("update", "", "Update command (stable, beta, nightly)")
 	serviceCmd := flag.String("service", "", "Service command (install, uninstall, start, stop, restart, status)")
 	maintenanceMode := flag.String("maintenance", "", "Maintenance mode (on/off)")
+	debug := flag.Bool("debug", false, "Enable debug output")
+	color := flag.String("color", "auto", "Color output (auto, yes, no)")
 
 	flag.Parse()
+	if *debug && *modeFlag == "" {
+		*modeFlag = "development"
+	}
+	if *color != "auto" && *color != "yes" && *color != "no" {
+		fmt.Fprintln(os.Stderr, "--color must be auto, yes, or no")
+		os.Exit(2)
+	}
+	if _, ok := os.LookupEnv("NO_COLOR"); ok {
+		*color = "no"
+	}
+	_ = color
 
 	// Unused vars to satisfy compiler
 	_ = logsDir
@@ -55,7 +70,7 @@ func main() {
 
 	// Handle version
 	if *showVersion {
-		fmt.Println(Version)
+		fmt.Printf("wordList v%s (commit %s, build epoch %s, site %s)\n", Version, CommitID, BuildEpoch, OfficialSite)
 		os.Exit(0)
 	}
 
@@ -130,7 +145,7 @@ func main() {
 
 	select {
 	case <-quit:
-		fmt.Println("\n🛑 Shutting down gracefully...")
+		fmt.Println("\nShutting down gracefully...")
 	case err := <-errChan:
 		log.Printf("Server error: %v", err)
 	}
@@ -143,7 +158,7 @@ func main() {
 		log.Printf("Server forced to shutdown: %v", err)
 	}
 
-	fmt.Println("✅ Server stopped")
+	fmt.Println("Server stopped")
 }
 
 func printHelp() {
@@ -188,11 +203,11 @@ Documentation: https://wordlist.apimgr.us
 
 func printStartup(cfg *config.Config) {
 	fmt.Println()
-	fmt.Printf("✅ wordList v%s started successfully\n", Version)
-	fmt.Printf("📡 Listening on http://%s:%s\n", getDisplayAddress(cfg), cfg.Server.Port)
-	fmt.Printf("📊 Swagger UI: http://%s:%s/swagger\n", getDisplayAddress(cfg), cfg.Server.Port)
-	fmt.Printf("📚 API Docs: http://%s:%s/api\n", getDisplayAddress(cfg), cfg.Server.Port)
-	fmt.Printf("📝 Words loaded: %d\n", words.Count())
+	fmt.Printf("wordList v%s started successfully\n", Version)
+	fmt.Printf("Listening on http://%s:%s\n", getDisplayAddress(cfg), cfg.Server.Port)
+	fmt.Printf("API documentation: http://%s:%s/server/docs/swagger\n", getDisplayAddress(cfg), cfg.Server.Port)
+	fmt.Printf("Health: http://%s:%s/server/healthz\n", getDisplayAddress(cfg), cfg.Server.Port)
+	fmt.Printf("Words loaded: %d\n", words.Count())
 	fmt.Println()
 }
 
@@ -212,23 +227,27 @@ func getDisplayAddress(cfg *config.Config) string {
 
 func checkStatus() {
 	// Try to connect to the server
-	cfg, _ := config.Load()
-	addr := fmt.Sprintf("http://localhost:%s/healthz", cfg.Server.Port)
+	cfg, err := config.Load()
+	if err != nil || cfg == nil {
+		fmt.Fprintln(os.Stderr, "Unable to read server configuration")
+		os.Exit(2)
+	}
+	addr := fmt.Sprintf("http://localhost:%s/api/v1/server/healthz", cfg.Server.Port)
 
 	client := &http.Client{Timeout: 2 * time.Second}
 	resp, err := client.Get(addr)
 	if err != nil {
-		fmt.Println("❌ Service is not running")
+		fmt.Println("Service is not running")
 		os.Exit(1)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusOK {
-		fmt.Println("✅ Service is running")
+		fmt.Println("Service is running")
 		os.Exit(0)
 	}
 
-	fmt.Println("⚠️ Service returned unexpected status")
+	fmt.Println("Service returned unexpected status")
 	os.Exit(2)
 }
 

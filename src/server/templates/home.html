@@ -7,9 +7,6 @@
     <meta name="description" content="EFF Large Wordlist API for generating secure passphrases">
     <meta name="theme-color" content="#6366f1">
     <link rel="manifest" href="/manifest.json">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/main.css">
 </head>
 <body>
@@ -24,7 +21,8 @@
                 <a href="/" class="nav-link active">Home</a>
                 <a href="/generate" class="nav-link">Generate</a>
                 <a href="/search" class="nav-link">Search</a>
-                <a href="/api" class="nav-link">API</a>
+                <a href="/server/docs/swagger" class="nav-link">API</a>
+            <button class="nav-link" id="theme-toggle" type="button" aria-label="Change color theme">Theme: auto</button>
             </div>
         </nav>
     </header>
@@ -49,7 +47,7 @@
                         <a href="/generate" class="btn btn-primary btn-lg">
                             Generate Passphrase
                         </a>
-                        <a href="/api" class="btn btn-secondary btn-lg">
+                        <a href="/server/docs/swagger" class="btn btn-secondary btn-lg">
                             API Documentation
                         </a>
                     </div>
@@ -89,7 +87,7 @@
                         <h3 class="feature-title">Word Search</h3>
                         <p class="feature-description">Search and browse the complete EFF wordlist by prefix, letter, or length.</p>
                     </a>
-                    <a href="/api" class="feature-card">
+                    <a href="/server/docs/swagger" class="feature-card">
                         <div class="feature-icon">⚡</div>
                         <h3 class="feature-title">REST API</h3>
                         <p class="feature-description">Full-featured REST API for integration with your applications and scripts.</p>
@@ -183,8 +181,8 @@
                 <span class="footer-text">{{.SiteTitle}} - Part of apimgr</span>
             </div>
             <div class="footer-links">
-                <a href="/api" class="footer-link">API Docs</a>
-                <a href="/healthz" class="footer-link">Status</a>
+                <a href="/server/docs/swagger" class="footer-link">API Docs</a>
+                <a href="/server/healthz" class="footer-link">Status</a>
                 <a href="https://github.com/apimgr" class="footer-link">GitHub</a>
             </div>
         </div>

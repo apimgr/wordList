@@ -24,6 +24,13 @@ type ServerConfig struct {
 	Mode         string        `yaml:"mode"`
 	UpdateBranch string        `yaml:"update_branch"`
 	Logging      LoggingConfig `yaml:"logging"`
+	RateLimit    RateLimitConfig `yaml:"rate_limit"`
+}
+
+type RateLimitConfig struct {
+	Enabled  bool `yaml:"enabled"`
+	Requests int  `yaml:"requests"`
+	Window   int  `yaml:"window_seconds"`
 }
 
 type LoggingConfig struct {
@@ -56,6 +63,7 @@ func defaultConfig() *Config {
 			Address:      "0.0.0.0",
 			Mode:         "production",
 			UpdateBranch: "stable",
+			RateLimit: RateLimitConfig{Enabled: true, Requests: 120, Window: 60},
 			Logging: LoggingConfig{
 				AccessFormat: "apache",
 				Level:        "info",
@@ -67,7 +75,7 @@ func defaultConfig() *Config {
 			Favicon: "",
 		},
 		WebRobots: WebRobotsConfig{
-			Allow: []string{"/", "/api"},
+			Allow: []string{"/", "/api/v1"},
 			Deny:  []string{},
 		},
 		WebSecurity: WebSecurityConfig{
@@ -124,6 +132,12 @@ func Load() (*Config, error) {
 	// Parse YAML
 	if err := yaml.Unmarshal(data, cfg); err != nil {
 		return cfg, err
+	}
+	if cfg.Server.RateLimit.Requests <= 0 {
+		cfg.Server.RateLimit.Requests = 120
+	}
+	if cfg.Server.RateLimit.Window <= 0 {
+		cfg.Server.RateLimit.Window = 60
 	}
 
 	return cfg, nil

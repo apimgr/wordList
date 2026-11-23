@@ -1,48 +1,86 @@
 # WordList
 
-WordList serves the EFF Large Wordlist for cryptographically secure Diceware passphrase generation. It embeds the 7,776-word list, maps words to five-die codes, and provides a public versioned REST API, GraphQL endpoint, server-rendered web app, and companion CLI.
+WordList serves the EFF Large Wordlist for Diceware passphrase generation. The Go server embeds the word data and provides a public REST API, GraphQL endpoint, server-rendered web pages, and a companion `wordList-cli` binary.
 
 ## Features
 
-- Secure passphrase generation using the operating system CSPRNG (six words by default, up to 20)
-- Dice code lookup, random word selection, search, browsing, and word list statistics
-- Server rendered, mobile friendly web interface with installable offline app shell
-- OpenAPI JSON, GraphQL endpoint, and `wordList-cli passphrase --words 8`
-- No accounts, external runtime dependencies, or server-side passphrase retention
+- Generate passphrases with Go's operating-system cryptographic random source (six words by default, one to 20 words).
+- Look up dice codes, retrieve random words, search and browse the word list, and read word-list statistics.
+- Use the responsive web interface without an account or API token.
+- Call JSON or plain-text REST endpoints, or the GraphQL endpoint.
+- Generate passphrases from a terminal with `wordList-cli`.
+- Run without runtime data downloads; the EFF word list is embedded in the server binary.
 
-## Build
+Generated passphrases are sensitive. The server does not store them, and the API marks generation responses `Cache-Control: no-store` and `Referrer-Policy: no-referrer`.
 
-Builds use the `casjaysdev/go:latest` container through the Makefile. The default listen port is `64851`.
+## Build and run
 
-```sh
-make dev
-```
+Go builds and tests run in the `casjaysdev/go:latest` container through the Makefile. `make dev` builds the server and client into a temporary directory and prints its location. The default server port is `64851`.
 
-The configuration file is created at the platform-specific WordList config directory on first start. In containers, configure `CONFIG_DIR`, `DATA_DIR`, and `PORT`.
+Configuration is created on first start in the platform-specific configuration directory. In Docker, `CONFIG_DIR`, `DATA_DIR`, and `PORT` select the runtime paths and port.
 
 ## Web pages
 
-- `/` — overview
-- `/generate` — passphrase generator
-- `/search` — word search
-- `/server/about`, `/server/help`, `/server/privacy`, `/server/terms`
-- `/server/healthz`
-- `/server/docs/swagger` and `/server/docs/graphql`
+| Path | Purpose |
+|---|---|
+| `/` | Word-list overview and links to search and generation |
+| `/generate` | No-JavaScript passphrase form |
+| `/search` | Search and browse the list |
+| `/server/about` | Service information |
+| `/server/help` | Usage help |
+| `/server/privacy` | Privacy information |
+| `/server/terms` | Terms of use |
+| `/server/healthz` | Human-readable service status |
+| `/server/docs/swagger` | REST API reference |
+| `/server/docs/graphql` | GraphQL endpoint information |
 
-## API
+## REST API
 
-API v1 is rooted at `/api/v1`; the OpenAPI document is `/api/v1/server/swagger`, health status is `/api/v1/server/healthz`, and GraphQL accepts POST requests at `/api/v1/server/graphql` (`/api/graphql` is an alias).
+The versioned API root is `/api/v1`. Endpoints are public and do not require authentication.
+
+| Method and path | Purpose |
+|---|---|
+| `GET /api/v1/` | API overview |
+| `GET /api/v1/server/healthz` | JSON health status |
+| `GET /api/v1/server/about`, `/help`, `/privacy`, `/terms` | Server page content as JSON |
+| `GET /api/v1/server/swagger` | OpenAPI document |
+| `POST /api/v1/server/graphql` | GraphQL endpoint |
+| `GET /api/v1/random[/{count}]` | Random words (default 6, 1–100) |
+| `GET /api/v1/random[/{count}].txt` | Random words as plain text |
+| `GET /api/v1/passphrase[/{count}]` | Secure passphrase (default 6, 1–20) |
+| `GET /api/v1/passphrase[/{count}].txt` | Passphrase as plain text |
+| `GET /api/v1/search/{query}` | Search by prefix or `?mode=contains`; optional `limit` (1–1000) |
+| `GET /api/v1/words` | Paginated list (`page`, `per_page`, default 100) |
+| `GET /api/v1/dice/{code}` | Word for a five-digit dice code |
+| `GET /api/v1/letters/{letter}` | Words beginning with a letter |
+| `GET /api/v1/lengths/{length}` | Words of a specified length |
+| `GET /api/v1/stats`, `/letters`, `/count` | Dataset statistics, letters, and count |
+
+Append `.txt` where listed for plain-text responses. Passphrase endpoints accept `separator` (up to eight characters) and `capitalize` (`false` disables capitalization). JSON errors use RFC 7807 problem details.
 
 ```sh
-curl 'http://localhost:64851/api/v1/passphrase/8'
-curl 'http://localhost:64851/api/v1/dice/11111'
-curl 'http://localhost:64851/api/v1/words?page=1&per_page=100'
+curl -q -LSsf http://localhost:64851/api/v1/passphrase/8
+curl -q -LSsf http://localhost:64851/api/v1/dice/11111
+curl -q -LSsf 'http://localhost:64851/api/v1/words?page=1&per_page=100'
 ```
+
+## GraphQL
+
+The GraphQL endpoint is `/api/v1/server/graphql`; the implementation currently supports word count, word-list statistics, and the full word list. Submit a JSON object with a `query` field. The API documentation page describes the endpoint.
 
 ## CLI
 
 ```sh
 wordList-cli passphrase --words 8
+wordList-cli passphrase --words 6 --separator ' '
 ```
 
-Generated passphrases are not logged, cached, or saved by the server or browser. The EFF Large Wordlist is sourced from [EFF's published list](https://www.eff.org/files/2016/07/18/eff_large_wordlist.txt).
+The CLI accepts `--words` from 1 to 20, `--separator` up to eight characters, and `--lowercase` to disable capitalization. `--help` and `--version` are also available.
+
+## Docker
+
+The Compose deployment is defined in `docker/docker-compose.yml`. The service publishes the configured container port and stores configuration and data in mounted directories. Its health check calls `/api/v1/server/healthz`.
+
+## Source and attribution
+
+The word list is the [EFF Large Wordlist](https://www.eff.org/files/2016/07/18/eff_large_wordlist.txt). This project is distributed under the license in [LICENSE.md](LICENSE.md).

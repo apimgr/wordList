@@ -30,24 +30,24 @@ client_binary: wordList-cli
 - Server pages: `/server/about`, `/server/help`, `/server/healthz`, `/server/privacy`, `/server/terms`
 - CLI client (`wordList-cli`) for terminal passphrase generation: `wordList-cli passphrase --words 8`
 - OpenAPI/Swagger docs at `/api/{api_version}/server/swagger`
-- GraphQL at `/graphql`
+- GraphQL at `/api/{api_version}/server/graphql` (with `/api/graphql` alias)
 
 **Non-goals:**
 - No user accounts, registration, or login of any kind
 - No admin web panel (server configured via `server.yml` only)
 - No user-submitted words (EFF Diceware dataset only, updated with EFF releases)
 - No definitions, parts of speech, or etymology
-- No paid tiers, no API keys, no rate-limited access tiers
+- No paid tiers or API keys for the public word-list and passphrase features; required AI.md operator and owner token flows still apply to system functions
 - No server-side passphrase storage (generated passphrases are never logged or retained)
 
 ### Roles & permissions
 
-There are no user roles. All endpoints are public and require no authentication.
+There are no end-user accounts or product roles. Public word-list and passphrase features require no authentication. Mandatory AI.md system functions use their specified operator or owner tokens; this does not add user registration or paid access tiers.
 
 | Actor | Access |
 |-------|--------|
-| **Anonymous visitor (browser)** | Full read access to all web pages and API endpoints; passphrase generation |
-| **Anonymous API client (curl/CLI)** | Full read access to all API endpoints; passphrase generation |
+| **Anonymous visitor (browser)** | Read public pages and use public word-list and passphrase features |
+| **Anonymous API client (curl/CLI)** | Read public word-list data and generate passphrases without an API key |
 | **Server operator** | Configures server via `server.yml` only; no web management interface |
 
 ### Data model & sensitivity
@@ -100,3 +100,45 @@ No external services called at runtime.
 - **`crypto/rand` for passphrase generation**: mandatory. Using `math/rand` or any seeded PRNG for passphrase generation is a security defect; `crypto/rand` is the only acceptable source.
 - **Passphrases never logged**: intentional. Logging a generated passphrase could expose it if a user uses it immediately after generation.
 - **All responses include `Access-Control-Allow-Origin: *`**: intentional. Public API designed for cross-origin browser use.
+
+### API routes
+
+All routes are public and unauthenticated. The native API uses the `/api/v1` prefix. JSON endpoints return the documented response object; `.txt` endpoints return plain text. Requests that generate a passphrase accept a word count, optional separator, and optional capitalization setting. The server-rendered pages are listed separately because their HTML responses are the browser interface for these features.
+
+| Method | Path | Auth | Purpose and request/response summary |
+|---|---|---|---|
+| GET | `/api/v1/` | None | API summary, version, word count, and endpoint list |
+| GET | `/api/v1/passphrase` | None | Generate a secure passphrase; `count` query defaults to 6 and must be 1–20; returns passphrase, words, entropy, and options |
+| GET | `/api/v1/passphrase/{count}` | None | Generate a secure passphrase with 1–20 words; returns passphrase, words, entropy, and options |
+| GET | `/api/v1/passphrase.txt` | None | Generate a six-word passphrase as plain text |
+| GET | `/api/v1/passphrase/{count}.txt` | None | Generate a 1–20 word passphrase as plain text |
+| GET | `/api/v1/random` | None | Return 6 random words by default; query count must be 1–100 |
+| GET | `/api/v1/random/{count}` | None | Return the requested 1–100 random words |
+| GET | `/api/v1/random.txt` | None | Return 6 random words as plain text by default |
+| GET | `/api/v1/random/{count}.txt` | None | Return the requested 1–100 random words as plain text |
+| GET | `/api/v1/search/{query}` | None | Search by prefix or `mode=contains`; optional `limit` from 1 to 1000; returns matching words and metadata |
+| GET | `/api/v1/search/{query}.txt` | None | Return matching words as plain text |
+| GET | `/api/v1/words` | None | Return a page of words; `page` defaults to 1, `per_page` defaults to 100 and is capped at 1000 |
+| GET | `/api/v1/words.txt` | None | Return the complete word list as plain text |
+| GET | `/api/v1/dice/{code}` | None | Resolve a five-digit dice code to its word |
+| GET | `/api/v1/dice/{code}.txt` | None | Return the matching word as plain text |
+| GET | `/api/v1/letters/{letter}` | None | Return words beginning with one ASCII letter |
+| GET | `/api/v1/letters/{letter}.txt` | None | Return those words as plain text |
+| GET | `/api/v1/lengths/{length}` | None | Return words with the requested length |
+| GET | `/api/v1/lengths/{length}.txt` | None | Return those words as plain text |
+| GET | `/api/v1/stats` | None | Return word-list statistics |
+| GET | `/api/v1/letters` | None | Return distinct starting letters |
+| GET | `/api/v1/count` | None | Return the word count as JSON |
+| GET | `/api/v1/count.txt` | None | Return the word count as plain text |
+| GET | `/api/v1/server/healthz` | Per AI.md | Return the public-safe service health response |
+| GET | `/api/v1/server/about` | None | Return About page data as JSON |
+| GET | `/api/v1/server/help` | None | Return Help page data as JSON |
+| GET | `/api/v1/server/privacy` | None | Return Privacy page data as JSON |
+| GET | `/api/v1/server/terms` | None | Return Terms page data as JSON |
+| GET | `/api/v1/server/swagger` | None | Return the OpenAPI document |
+| POST | `/api/v1/server/graphql` | Per AI.md | Accept a JSON GraphQL query and return supported word count, statistics, or word-list fields |
+| GET | `/api/healthz` | None | Unversioned health alias |
+| GET | `/api/swagger` | None | Unversioned OpenAPI alias |
+| POST | `/api/graphql` | None | Unversioned GraphQL alias |
+
+The browser surface includes `/`, `/generate`, `/search`, `/server/about`, `/server/help`, `/server/privacy`, `/server/terms`, `/server/healthz`, `/server/docs/swagger`, and `/server/docs/graphql`. `/graphql` is not a supported route.

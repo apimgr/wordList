@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#6366f1">
+  <title>{{.Title}} - {{.SiteTitle}}</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+  <header class="header"><nav class="nav"><a class="nav-brand" href="/">{{.SiteTitle}}</a><div class="nav-links"><a class="nav-link" href="/generate">Generate</a><a class="nav-link" href="/search">Search</a><a class="nav-link" href="/server/docs/swagger">API</a><button class="nav-link" id="theme-toggle" type="button" aria-label="Change color theme">Theme: auto</button></div></nav></header>
+  <main class="container"><article class="section-header"><h1 class="section-title">{{.Title}}</h1><p class="section-description">{{.Content}}</p></article></main>
+  <footer class="footer"><div class="footer-content"><a href="/server/privacy">Privacy</a><a href="/server/terms">Terms</a><a href="/server/help">Help</a><a href="/server/healthz">Health</a></div></footer>
+  <script src="/static/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "WordList API",
+    "version": "1.0.0",
+    "description": "Public API for secure EFF Large Wordlist passphrase generation and lookups."
+  },
+  "servers": [{"url": "/api/v1"}],
+  "paths": {
+    "/server/healthz": {"get": {"summary": "Service health", "responses": {"200": {"description": "Healthy service status"}}}},
+    "/passphrase": {"get": {"summary": "Generate a secure passphrase", "parameters": [{"name": "count", "in": "query", "schema": {"type": "integer", "default": 6, "minimum": 1, "maximum": 20}}, {"name": "separator", "in": "query", "schema": {"type": "string", "default": "-"}}], "responses": {"200": {"description": "Generated passphrase"}, "400": {"description": "Invalid parameters"}}}},
+    "/random": {"get": {"summary": "Select random words", "responses": {"200": {"description": "Random word list"}}}},
+    "/words": {"get": {"summary": "List words with pagination", "responses": {"200": {"description": "Word list page"}}}},
+    "/dice/{code}": {"get": {"summary": "Look up a dice code", "parameters": [{"name": "code", "in": "path", "required": true, "schema": {"type": "string", "pattern": "^[1-6]{5}$"}}], "responses": {"200": {"description": "Word for dice code"}, "404": {"description": "Unknown dice code"}}}},
+    "/search/{query}": {"get": {"summary": "Search words", "responses": {"200": {"description": "Matching words"}}}},
+    "/stats": {"get": {"summary": "Word list statistics", "responses": {"200": {"description": "Statistics"}}}}
+  }
+}

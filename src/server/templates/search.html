@@ -7,9 +7,6 @@
     <meta name="description" content="Search and browse the EFF Large Wordlist">
     <meta name="theme-color" content="#6366f1">
     <link rel="manifest" href="/manifest.json">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/main.css">
 </head>
 <body>
@@ -24,7 +21,8 @@
                 <a href="/" class="nav-link">Home</a>
                 <a href="/generate" class="nav-link">Generate</a>
                 <a href="/search" class="nav-link active">Search</a>
-                <a href="/api" class="nav-link">API</a>
+                <a href="/server/docs/swagger" class="nav-link">API</a>
+            <button class="nav-link" id="theme-toggle" type="button" aria-label="Change color theme">Theme: auto</button>
             </div>
         </nav>
     </header>
@@ -38,15 +36,16 @@
                 </div>
 
                 <!-- Search Form -->
-                <form id="search-form" class="search-form">
+                <form id="search-form" class="search-form" method="get" action="/search">
                     <div class="form-group">
                         <label for="query" class="form-label">Search Query</label>
                         <input
                             type="text"
                             id="query"
-                            name="query"
+                            name="q"
                             class="form-input"
                             placeholder="Enter word or prefix..."
+                            value="{{.Query}}"
                             autocomplete="off"
                         >
                     </div>
@@ -103,6 +102,13 @@
                     <p>Searching...</p>
                 </div>
 
+                {{if .Error}}<p class="error-message" role="alert">{{.Error}}</p>{{end}}
+                {{if .Query}}
+                <section class="results-section" aria-live="polite">
+                    <h2>Results for {{.Query}}</h2>
+                    {{if .Results}}<ul class="words-results-grid">{{range .Results}}<li>{{.}}</li>{{end}}</ul>{{else}}<p>No matching words found.</p>{{end}}
+                </section>
+                {{end}}
                 <!-- Results -->
                 <div id="results" class="results-section" style="display: none;">
                     <div class="results-header">
@@ -138,8 +144,8 @@
                 <span class="footer-text">{{.SiteTitle}} - Part of apimgr</span>
             </div>
             <div class="footer-links">
-                <a href="/api" class="footer-link">API Docs</a>
-                <a href="/healthz" class="footer-link">Status</a>
+                <a href="/server/docs/swagger" class="footer-link">API Docs</a>
+                <a href="/server/healthz" class="footer-link">Status</a>
                 <a href="https://github.com/apimgr" class="footer-link">GitHub</a>
             </div>
         </div>
@@ -237,7 +243,7 @@
             loading.style.display = 'flex';
             results.style.display = 'none';
 
-            const response = await fetch(`/api/v1/letter/${letter}`);
+            const response = await fetch(`/api/v1/letters/${letter}`);
             const data = await response.json();
 
             loading.style.display = 'none';
@@ -255,7 +261,7 @@
             loading.style.display = 'flex';
             results.style.display = 'none';
 
-            const response = await fetch(`/api/v1/length/${length}`);
+            const response = await fetch(`/api/v1/lengths/${length}`);
             const data = await response.json();
 
             loading.style.display = 'none';

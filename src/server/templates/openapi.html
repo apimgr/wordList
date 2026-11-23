@@ -7,9 +7,6 @@
     <meta name="description" content="WordList REST API documentation">
     <meta name="theme-color" content="#6366f1">
     <link rel="manifest" href="/manifest.json">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/main.css">
 </head>
 <body>
@@ -24,7 +21,8 @@
                 <a href="/" class="nav-link">Home</a>
                 <a href="/generate" class="nav-link">Generate</a>
                 <a href="/search" class="nav-link">Search</a>
-                <a href="/api" class="nav-link active">API</a>
+                <a href="/server/docs/swagger" class="nav-link active">API</a>
+            <button class="nav-link" id="theme-toggle" type="button" aria-label="Change color theme">Theme: auto</button>
             </div>
         </nav>
     </header>
@@ -222,24 +220,24 @@ curl "{{.BaseURL}}/api/v1/search/word?mode=contains"</code></pre>
                     <div class="endpoint-card">
                         <div class="endpoint-header">
                             <span class="method get">GET</span>
-                            <code>/api/v1/letter/{letter}</code>
+                            <code>/api/v1/letters/{letter}</code>
                         </div>
                         <p class="endpoint-desc">Get all words starting with a specific letter</p>
                         <div class="endpoint-example">
                             <h4>Example</h4>
-                            <pre><code>curl {{.BaseURL}}/api/v1/letter/a</code></pre>
+                            <pre><code>curl {{.BaseURL}}/api/v1/letters/a</code></pre>
                         </div>
                     </div>
 
                     <div class="endpoint-card">
                         <div class="endpoint-header">
                             <span class="method get">GET</span>
-                            <code>/api/v1/length/{length}</code>
+                            <code>/api/v1/lengths/{length}</code>
                         </div>
                         <p class="endpoint-desc">Get all words of a specific length</p>
                         <div class="endpoint-example">
                             <h4>Example</h4>
-                            <pre><code>curl {{.BaseURL}}/api/v1/length/5</code></pre>
+                            <pre><code>curl {{.BaseURL}}/api/v1/lengths/5</code></pre>
                         </div>
                     </div>
                 </div>
@@ -289,7 +287,7 @@ curl "{{.BaseURL}}/api/v1/search/word?mode=contains"</code></pre>
                     <div class="endpoint-card">
                         <div class="endpoint-header">
                             <span class="method get">GET</span>
-                            <code>/healthz</code>
+                            <code>/api/v1/server/healthz</code>
                         </div>
                         <p class="endpoint-desc">Check service health</p>
                         <div class="endpoint-example">
@@ -316,8 +314,8 @@ curl "{{.BaseURL}}/api/v1/search/word?mode=contains"</code></pre>
                 <span class="footer-text">{{.SiteTitle}} - Part of apimgr</span>
             </div>
             <div class="footer-links">
-                <a href="/api" class="footer-link">API Docs</a>
-                <a href="/healthz" class="footer-link">Status</a>
+                <a href="/server/docs/swagger" class="footer-link">API Docs</a>
+                <a href="/server/healthz" class="footer-link">Status</a>
                 <a href="https://github.com/apimgr" class="footer-link">GitHub</a>
             </div>
         </div>

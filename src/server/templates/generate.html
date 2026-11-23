@@ -7,9 +7,6 @@
     <meta name="description" content="Generate secure passphrases using the EFF Large Wordlist">
     <meta name="theme-color" content="#6366f1">
     <link rel="manifest" href="/manifest.json">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/main.css">
 </head>
 <body>
@@ -24,7 +21,8 @@
                 <a href="/" class="nav-link">Home</a>
                 <a href="/generate" class="nav-link active">Generate</a>
                 <a href="/search" class="nav-link">Search</a>
-                <a href="/api" class="nav-link">API</a>
+                <a href="/server/docs/swagger" class="nav-link">API</a>
+            <button class="nav-link" id="theme-toggle" type="button" aria-label="Change color theme">Theme: auto</button>
             </div>
         </nav>
     </header>
@@ -38,7 +36,7 @@
                 </div>
 
                 <!-- Generator Form -->
-                <form id="generator-form" class="search-form">
+                <form id="generator-form" class="search-form" method="post" action="/generate">
                     <div class="form-row">
                         <div class="form-group">
                             <label for="word-count" class="form-label">Number of Words</label>
@@ -81,6 +79,15 @@
                     <p>Generating passphrase...</p>
                 </div>
 
+                {{if .Error}}<p class="error-message" role="alert">{{.Error}}</p>{{end}}
+                {{if .Passphrase}}
+                <section class="result-card" aria-live="polite">
+                    <h2>Your passphrase</h2>
+                    <p class="passphrase-display">{{.Passphrase}}</p>
+                    <p>{{.WordCount}} words · {{printf "%.1f" .Entropy}} bits of entropy</p>
+                    <p>Passphrases are not stored by this service or in this browser.</p>
+                </section>
+                {{end}}
                 <!-- Result -->
                 <div id="result" class="result-card" style="display: none;">
                     <div class="result-header">
@@ -110,13 +117,7 @@
                     </div>
                 </div>
 
-                <!-- History -->
-                <div id="history-section" class="history-section" style="display: none;">
-                    <h3>Recent Passphrases</h3>
-                    <p class="history-note">Stored locally in your browser only</p>
-                    <div id="history-list" class="history-list"></div>
-                    <button class="btn btn-secondary" onclick="clearHistory()">Clear History</button>
-                </div>
+
             </div>
         </section>
     </main>
@@ -129,8 +130,8 @@
                 <span class="footer-text">{{.SiteTitle}} - Part of apimgr</span>
             </div>
             <div class="footer-links">
-                <a href="/api" class="footer-link">API Docs</a>
-                <a href="/healthz" class="footer-link">Status</a>
+                <a href="/server/docs/swagger" class="footer-link">API Docs</a>
+                <a href="/server/healthz" class="footer-link">Status</a>
                 <a href="https://github.com/apimgr" class="footer-link">GitHub</a>
             </div>
         </div>
@@ -138,7 +139,6 @@
 
     <script src="/static/js/main.js"></script>
     <script>
-        const history = JSON.parse(localStorage.getItem('passphrase-history') || '[]');
 
         document.getElementById('generator-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -189,14 +189,38 @@
                 const wordsList = document.getElementById('words-list');
                 wordsList.innerHTML = data.words.map(w => `<span class="word-chip">${w}</span>`).join('');
 
-                // Add to history
-                addToHistory(data.passphrase, data.word_count);
 
             } catch (error) {
-                loading.style.display = 'none';
-                result.style.display = 'block';
-                document.getElementById('passphrase-display').textContent = 'Error generating passphrase';
+                try {
+                    const response = await fetch('/api/v1/words.txt');
+                    if (!response.ok || !window.crypto || !window.crypto.getRandomValues) throw new Error('offline word list unavailable');
+                    const availableWords = (await response.text()).trim().split(/\s+/);
+                    const chosen = Array.from({length: Number(count)}, () => secureIndex(availableWords.length));
+                    const generated = chosen.map(index => {
+                        const word = availableWords[index];
+                        return capitalize === 'true' ? word[0].toUpperCase() + word.slice(1) : word;
+                    }).join(separator);
+                    loading.style.display = 'none';
+                    result.style.display = 'block';
+                    document.getElementById('passphrase-display').textContent = generated;
+                    document.getElementById('info-words').textContent = count;
+                    document.getElementById('info-entropy').textContent = `~${(Number(count) * Math.log2(availableWords.length)).toFixed(1)} bits (offline)`;
+                    document.getElementById('info-strength').textContent = 'Generated offline';
+                    document.getElementById('words-list').textContent = chosen.map(index => availableWords[index]).join(', ');
+                } catch (_) {
+                    loading.style.display = 'none';
+                    result.style.display = 'block';
+                    document.getElementById('passphrase-display').textContent = 'Secure passphrase generation is unavailable offline until the word list is cached.';
+                }
             }
+        }
+
+        function secureIndex(length) {
+            const max = 0x100000000;
+            const limit = max - (max % length);
+            const value = new Uint32Array(1);
+            do { window.crypto.getRandomValues(value); } while (value[0] >= limit);
+            return value[0] % length;
         }
 
         function copyPassphrase() {
@@ -208,39 +232,6 @@
             });
         }
 
-        function addToHistory(passphrase, wordCount) {
-            history.unshift({ passphrase, wordCount, timestamp: Date.now() });
-            if (history.length > 10) history.pop();
-            localStorage.setItem('passphrase-history', JSON.stringify(history));
-            renderHistory();
-        }
-
-        function renderHistory() {
-            const historySection = document.getElementById('history-section');
-            const historyList = document.getElementById('history-list');
-
-            if (history.length === 0) {
-                historySection.style.display = 'none';
-                return;
-            }
-
-            historySection.style.display = 'block';
-            historyList.innerHTML = history.map((item, i) => `
-                <div class="history-item">
-                    <code>${item.passphrase}</code>
-                    <span class="history-meta">${item.wordCount} words</span>
-                </div>
-            `).join('');
-        }
-
-        function clearHistory() {
-            history.length = 0;
-            localStorage.removeItem('passphrase-history');
-            renderHistory();
-        }
-
-        // Initial render
-        renderHistory();
     </script>
 
     <style>
@@ -331,43 +322,11 @@
             font-size: 0.875rem;
         }
 
-        .history-section {
-            margin-top: var(--space-8);
-            padding-top: var(--space-6);
-            border-top: 1px solid var(--border-primary);
-        }
 
-        .history-note {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-            margin-bottom: var(--space-4);
-        }
 
-        .history-list {
-            display: grid;
-            gap: var(--space-2);
-            margin-bottom: var(--space-4);
-        }
 
-        .history-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: var(--space-3);
-            background: var(--bg-secondary);
-            border-radius: var(--radius-md);
-        }
 
-        .history-item code {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.875rem;
-            color: var(--text-primary);
-        }
 
-        .history-meta {
-            color: var(--text-secondary);
-            font-size: 0.75rem;
-        }
 
         .btn-block {
             width: 100%;

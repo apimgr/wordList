@@ -67,7 +67,7 @@ There are no end-user accounts or product roles. Public word-list and passphrase
 | `words` | string[] — individual words | **Sensitive** — never logged |
 | `entropy` | float — entropy in bits | Public |
 
-No PII stored or served. Generated passphrases are computed in memory, returned to the caller, and never logged or stored server-side.
+The passphrase and word-list features do not store PII. Generated passphrases are computed in memory, returned to the caller, and never logged or stored server-side. Mandatory AI.md system features may store operational records, owner/token metadata, and encrypted contact or security reports as specified there; that data is separate from passphrase generation and must follow the required retention, encryption, and privacy controls.
 
 ### Trust boundaries & external services
 
@@ -77,7 +77,7 @@ No PII stored or served. Generated passphrases are computed in memory, returned 
 | Incoming HTTP requests | **Untrusted** | Word count parameter validated and bounded |
 | System CSPRNG (`crypto/rand`) | Fully trusted | Used for all passphrase generation; no `math/rand` |
 
-No external services called at runtime.
+The passphrase and word-list features do not require external services. Mandatory AI.md capabilities may make outbound SMTP, Tor, I2P, GeoIP, update, and optional remote database connections when configured or enabled; each remains disabled or unavailable when its required configuration is absent.
 
 ### Threat model & abuse cases
 
@@ -96,14 +96,14 @@ No external services called at runtime.
 
 ### Security decisions & exceptions
 
-- **No authentication on any endpoint**: intentional. Public read-only reference and generation API.
+- **No end-user accounts or login**: intentional. Public word-list and passphrase routes remain open; AI.md-required operator and anonymous owner tokens apply only to system features and their API routes.
 - **`crypto/rand` for passphrase generation**: mandatory. Using `math/rand` or any seeded PRNG for passphrase generation is a security defect; `crypto/rand` is the only acceptable source.
 - **Passphrases never logged**: intentional. Logging a generated passphrase could expose it if a user uses it immediately after generation.
-- **All responses include `Access-Control-Allow-Origin: *`**: intentional. Public API designed for cross-origin browser use.
+- **CORS follows AI.md configuration and origin resolution**: the public API is designed for cross-origin use, while credentials, MCP origin checks, and configured allow-lists follow the mandatory server security rules.
 
 ### API routes
 
-All routes are public and unauthenticated. The native API uses the `/api/v1` prefix. JSON endpoints return the documented response object; `.txt` endpoints return plain text. Requests that generate a passphrase accept a word count, optional separator, and optional capitalization setting. The server-rendered pages are listed separately because their HTML responses are the browser interface for these features.
+Public word-list and passphrase routes are unauthenticated; mandatory AI.md system routes use their specified token requirements. The native API uses the `/api/v1` prefix. JSON endpoints return the documented response object; `.txt` endpoints return plain text. Requests that generate a passphrase accept a word count, optional separator, and optional capitalization setting. The server-rendered pages are listed separately because their HTML responses are the browser interface for these features.
 
 | Method | Path | Auth | Purpose and request/response summary |
 |---|---|---|---|
@@ -135,10 +135,20 @@ All routes are public and unauthenticated. The native API uses the `/api/v1` pre
 | GET | `/api/v1/server/help` | None | Return Help page data as JSON |
 | GET | `/api/v1/server/privacy` | None | Return Privacy page data as JSON |
 | GET | `/api/v1/server/terms` | None | Return Terms page data as JSON |
+| GET | `/api/v1/server/contact` | None | Return contact form types, field descriptors, and anti-spam requirements |
+| POST | `/api/v1/server/contact` | Per AI.md | Submit or confirm a validated contact or security report |
+| GET, POST | `/api/v1/server/preferences` | Per AI.md | Read or save browser preferences |
+| GET | `/api/v1/server/preferences/sync` | None | Export supported preferences as a URL and code |
+| GET | `/api/v1/server/preferences/sync/import` | None | Import supported preferences from a URL |
+| GET | `/api/v1/server/dpo` | None | Return data-protection contact information |
+| GET | `/api/v1/server/security` | None | Return public security policy and reporting information |
+| POST | `/api/v1/server/mcp` | Bearer token | Streamable HTTP MCP endpoint; exposes the existing API operations as tools |
 | GET | `/api/v1/server/swagger` | None | Return the OpenAPI document |
 | POST | `/api/v1/server/graphql` | Per AI.md | Accept a JSON GraphQL query and return supported word count, statistics, or word-list fields |
 | GET | `/api/healthz` | None | Unversioned health alias |
 | GET | `/api/swagger` | None | Unversioned OpenAPI alias |
 | POST | `/api/graphql` | None | Unversioned GraphQL alias |
+| POST | `/api/mcp` | Bearer token | Unversioned alias for the MCP endpoint |
+| POST | `/mcp` | Bearer token | Root alias for the MCP endpoint |
 
-The browser surface includes `/`, `/generate`, `/search`, `/server/about`, `/server/help`, `/server/privacy`, `/server/terms`, `/server/healthz`, `/server/docs/swagger`, and `/server/docs/graphql`. `/graphql` is not a supported route.
+The browser surface includes `/`, `/generate`, `/search`, `/server/about`, `/server/help`, `/server/help/mcp`, `/server/privacy`, `/server/terms`, `/server/contact`, `/server/dpo`, `/server/security`, `/server/security/policy`, `/server/security/thanks`, `/server/preferences`, `/server/preferences/sync`, `/server/healthz`, `/server/docs/swagger`, and `/server/docs/graphql`. `/graphql` is not a supported route.

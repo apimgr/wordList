@@ -12,6 +12,31 @@ This list records verified implementation gaps that remain after synchronizing t
 6. Complete required root/project infrastructure and supporting docs/tests: provider workflows, Docker variants, service templates, integration and E2E scripts, page conformance, route coverage, and API/docs parity.
 7. Verify the complete implementation using the project-required container commands and report actual results.
 
+## Verified outstanding implementation gaps
+
+These items were checked against AI.md and the current repository after the previous changes. They are implementation work, not audit conclusions.
+
+### Server and data lifecycle
+
+- Add the required bearer-token validation and owner-token lifecycle, including the owner token page/API, cookie restore/reveal/rotation flows, route authorization, and API-only header authentication.
+- Implement the required MCP streamable HTTP endpoint and aliases, protocol/header/origin validation, OpenAPI-derived tools, and the live MCP help page/API. The current help page advertises an endpoint that is not registered.
+- Implement request-aware absolute URL resolution with validated Host handling and trusted-proxy gates for forwarded host/proto/port headers; use it consistently in canonical URLs, API docs, security files, sitemap, feeds, and `llms.txt`.
+- Replace contact POST's 503 response with the required two-step validated submission, persistent encrypted reports, SMTP delivery, replay/rate controls, and security-report flow. Add the installation-secret security ID and live security acknowledgments instead of empty/static pages.
+- Complete DPO, privacy, terms, security, preferences, and help page/API content from the specified config and product sources. The current DPO and legal pages are generic translations and the preferences/help registries omit required pages.
+- Wire SQLite to application state and implement required app-secret initialization, audit, token, report, rate-limit, and scheduler persistence. Add the required libsql driver/configuration path and database-mode tests.
+- Start and stop the built-in scheduler with the server; persist task state, implement required registered jobs/catch-up/timezone behavior, and add panic/recovery coverage. The scheduler package currently is not started by `main` and its state is in memory only.
+- Complete SMTP auto-detection, TLS modes, customizable embedded email templates, environment precedence, notification delivery, and email tests.
+- Complete configured Let's Encrypt challenge support, renewal integration, certificate storage/security, and startup wiring. The current SSL package is not connected to the server and does not implement the required DNS provider behavior.
+- Implement backups/restore and encryption/retention, GeoIP and blocklist loading, internal authenticated metrics, update checking/install lifecycle, privilege drop, and service manager templates/installation behavior.
+- Implement Tor and opt-in/outside-container I2P setup, health monitoring, advertised addresses, and related help/footer behavior.
+
+### Client, pages, docs, and release infrastructure
+
+- Complete the client specification: CLI command/flag/config parity, localization and completions, token-aware API behavior, update flow, context detection, first-run wizard, and required TUI/GUI behavior.
+- Finish PART 16/PART 30 page requirements: shared component conformance, complete responsive/accessibility checks, user-consent/preferences behavior, language parity for every rendered string, and offline/PWA install/update coverage.
+- Add the required Incus, end-to-end, VM, and route/page conformance test runners; ensure generated OpenAPI, route registrations, MCP tools, llms.txt, IDEA inventory, and documentation stay in parity.
+- Complete all required provider CI/release/security workflows and service/container artifacts from their applicable PARTs, then run the required containerized build, tests, linters, documentation checks, and CI verification.
+
 ## Completed in current working tree (not committed)
 
 - Replaced README with a route- and behavior-focused guide.

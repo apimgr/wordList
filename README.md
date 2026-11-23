@@ -28,8 +28,16 @@ Configuration is created on first start in the platform-specific configuration d
 | `/search` | Search and browse the list |
 | `/server/about` | Service information |
 | `/server/help` | Usage help |
+| `/server/help/mcp` | MCP connection guidance |
 | `/server/privacy` | Privacy information |
 | `/server/terms` | Terms of use |
+| `/server/contact` | Abuse, DMCA, and privacy report forms (submission currently unavailable) |
+| `/server/dpo` | Configured DPO contact and privacy link |
+| `/server/security` | Security reporting and policy links |
+| `/server/security/policy` | Disclosure policy |
+| `/server/security/thanks` | Researcher acknowledgments |
+| `/server/preferences` | Browser preferences |
+| `/server/preferences/sync` | Export and import browser preferences |
 | `/server/healthz` | Human-readable service status |
 | `/server/docs/swagger` | REST API reference |
 | `/server/docs/graphql` | GraphQL endpoint information |
@@ -43,6 +51,11 @@ The versioned API root is `/api/v1`. Endpoints are public and do not require aut
 | `GET /api/v1/` | API overview |
 | `GET /api/v1/server/healthz` | JSON health status |
 | `GET /api/v1/server/about`, `/help`, `/privacy`, `/terms` | Server page content as JSON |
+| `GET /api/v1/server/dpo` | Configured DPO/general contact fallback and privacy URL |
+| `GET /api/v1/server/contact` | Contact form fields and anti-spam requirements |
+| `GET, POST /api/v1/server/preferences` | Read or save browser preferences |
+| `GET /api/v1/server/preferences/sync` | Export preferences |
+| `GET /api/v1/server/preferences/sync/import` | Import preferences |
 | `GET /api/v1/server/swagger` | OpenAPI document |
 | `POST /api/v1/server/graphql` | GraphQL endpoint |
 | `GET /api/v1/random[/{count}]` | Random words (default 6, 1–100) |
@@ -56,7 +69,7 @@ The versioned API root is `/api/v1`. Endpoints are public and do not require aut
 | `GET /api/v1/lengths/{length}` | Words of a specified length |
 | `GET /api/v1/stats`, `/letters`, `/count` | Dataset statistics, letters, and count |
 
-Append `.txt` where listed for plain-text responses. Passphrase endpoints accept `separator` (up to eight characters) and `capitalize` (`false` disables capitalization). JSON errors use RFC 7807 problem details.
+Append `.txt` where listed for plain-text responses. Passphrase endpoints accept `separator` (up to eight characters) and `capitalize` (`false` disables capitalization). JSON errors use the documented `ok`, `error`, and `message` fields.
 
 ```sh
 curl -q -LSsf http://localhost:64851/api/v1/passphrase/8
@@ -79,7 +92,7 @@ The CLI accepts `--words` from 1 to 20, `--separator` up to eight characters, an
 
 ## Docker
 
-The Compose deployment is defined in `docker/docker-compose.yml`. The service publishes the configured container port and stores configuration and data in mounted directories. Its health check calls `/api/v1/server/healthz`.
+The Compose deployment is defined in `docker/docker-compose.yml`. The service publishes the configured container port and stores configuration and data in mounted directories. Its health check calls `/api/v1/server/healthz`. For automated binary and API checks, run `./tests/run_tests.sh`; it requires Docker and builds the server and CLI before running them in a disposable Alpine container. `make test` runs the Go test, vet, and coverage suite.
 
 ## Source and attribution
 

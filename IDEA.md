@@ -13,6 +13,7 @@ repo: https://github.com/apimgr/wordList
 license: MIT
 binary: wordList
 client_binary: wordList-cli
+owner_token: wordList_owner_token_qwhzkfta
 
 ## Business logic
 
@@ -138,6 +139,7 @@ Public word-list and passphrase routes are unauthenticated; mandatory AI.md syst
 | GET | `/api/v1/server/contact` | None | Return contact form types, field descriptors, and anti-spam requirements |
 | POST | `/api/v1/server/contact` | Per AI.md | Submit or confirm a validated contact or security report |
 | GET, POST | `/api/v1/server/preferences` | Per AI.md | Read or save browser preferences |
+| POST | `/api/v1/server/preferences/tokens/primary` | None; valid bearer token returns conflict | Issue a new anonymous owner and primary token; returns `owner_token` once |
 | GET | `/api/v1/server/preferences/sync` | None | Export supported preferences as a URL and code |
 | GET | `/api/v1/server/preferences/sync/import` | None | Import supported preferences from a URL |
 | GET | `/api/v1/server/dpo` | None | Return data-protection contact information |
@@ -151,4 +153,4 @@ Public word-list and passphrase routes are unauthenticated; mandatory AI.md syst
 | POST | `/api/mcp` | Bearer token | Unversioned alias for the MCP endpoint |
 | POST | `/mcp` | Bearer token | Root alias for the MCP endpoint |
 
-The browser surface includes `/`, `/generate`, `/search`, `/server/about`, `/server/help`, `/server/help/mcp`, `/server/privacy`, `/server/terms`, `/server/contact`, `/server/dpo`, `/server/security`, `/server/security/policy`, `/server/security/thanks`, `/server/preferences`, `/server/preferences/sync`, `/server/healthz`, `/server/docs/swagger`, and `/server/docs/graphql`. `/graphql` is not a supported route.
+The browser surface includes `/`, `/generate`, `/search`, `/server/about`, `/server/help`, `/server/help/mcp`, `/server/privacy`, `/server/terms`, `/server/contact`, `/server/dpo`, `/server/security`, `/server/security/policy`, `/server/security/thanks`, `/server/preferences`, `/server/preferences/tokens`, `/server/preferences/sync`, `/server/healthz`, `/server/docs/swagger`, and `/server/docs/graphql`. `/graphql` is not a supported route.

@@ -37,6 +37,7 @@ Configuration is created on first start in the platform-specific configuration d
 | `/server/security/policy` | Disclosure policy |
 | `/server/security/thanks` | Researcher acknowledgments |
 | `/server/preferences` | Browser preferences |
+| `/server/preferences/tokens` | Issue, restore, and reveal an anonymous owner's primary token |
 | `/server/preferences/sync` | Export and import browser preferences |
 | `/server/healthz` | Human-readable service status |
 | `/server/docs/swagger` | REST API reference |
@@ -44,7 +45,7 @@ Configuration is created on first start in the platform-specific configuration d
 
 ## REST API
 
-The versioned API root is `/api/v1`. Endpoints are public and do not require authentication.
+The versioned API root is `/api/v1`. Word-list and passphrase endpoints are public. Required system endpoints use the authentication rules in AI.md; owner-token issuance is public, and API token management requires the primary bearer token.
 
 | Method and path | Purpose |
 |---|---|
@@ -54,6 +55,7 @@ The versioned API root is `/api/v1`. Endpoints are public and do not require aut
 | `GET /api/v1/server/dpo` | Configured DPO/general contact fallback and privacy URL |
 | `GET /api/v1/server/contact` | Contact form fields and anti-spam requirements |
 | `GET, POST /api/v1/server/preferences` | Read or save browser preferences |
+| `POST /api/v1/server/preferences/tokens/primary` | Issue an anonymous owner's primary token; returns the raw token once |
 | `GET /api/v1/server/preferences/sync` | Export preferences |
 | `GET /api/v1/server/preferences/sync/import` | Import preferences |
 | `GET /api/v1/server/swagger` | OpenAPI document |
@@ -80,6 +82,10 @@ curl -q -LSsf 'http://localhost:64851/api/v1/words?page=1&per_page=100'
 ## GraphQL
 
 The GraphQL endpoint is `/api/v1/server/graphql`; the implementation currently supports word count, word-list statistics, and the full word list. Submit a JSON object with a `query` field. The API documentation page describes the endpoint.
+
+## Languages
+
+The embedded locale set includes English, Spanish, French, German, Italian, and Arabic. Arabic uses right-to-left layout. See the [translation guide](docs/translating.md) for locale files, contribution conventions, and review checks.
 
 ## CLI
 

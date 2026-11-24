@@ -1,86 +1,89 @@
 # WordList
 
-WordList serves the EFF Large Wordlist for Diceware passphrase generation. The Go server embeds the word data and provides a public REST API, GraphQL endpoint, server-rendered web pages, and a companion `wordList-cli` binary.
+[![CI](https://github.com/apimgr/wordList/actions/workflows/ci.yml/badge.svg)](https://github.com/apimgr/wordList/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/apimgr/wordList)](https://github.com/apimgr/wordList/releases)
+[![License](https://img.shields.io/github/license/apimgr/wordList)](LICENSE.md)
+
+## About
+
+WordList serves the EFF Large Wordlist for Diceware passphrase generation. The Go server embeds all 7,776 words and provides a versioned REST API, GraphQL endpoint, server-rendered web interface, and companion `wordList-cli` binary.
 
 ## Features
 
-- Generate passphrases with Go's operating-system cryptographic random source (six words by default, one to 20 words).
-- Look up dice codes, retrieve random words, search and browse the word list, and read word-list statistics.
-- Use the responsive web interface without an account or API token.
+- Generate cryptographically secure passphrases with `crypto/rand` (six words by default, one to 20 words).
+- Look up dice codes, retrieve random words, search and browse the list, and read word-list statistics.
+- Use the responsive web interface without an account.
 - Call JSON or plain-text REST endpoints, or the GraphQL endpoint.
-- Generate passphrases from a terminal with `wordList-cli`.
-- Run without runtime data downloads; the EFF word list is embedded in the server binary.
+- Generate passphrases locally or from a configured server with `wordList-cli`.
+- Run without runtime word-list downloads; the EFF data is embedded in the server binary.
 
-Generated passphrases are sensitive. The server does not store them, and the API marks generation responses `Cache-Control: no-store` and `Referrer-Policy: no-referrer`.
+## Production
 
-## Build and run
+### Docker Compose
 
-Go builds and tests run in the `casjaysdev/go:latest` container through the Makefile. `make dev` builds the server and client into a temporary directory and prints its location. The default server port is `64851`.
+Review the port and persistent volume locations in `docker/docker-compose.yml`, then start the service:
 
-Configuration is created on first start in the platform-specific configuration directory. In Docker, `CONFIG_DIR`, `DATA_DIR`, and `PORT` select the runtime paths and port.
+```sh
+docker compose -f docker/docker-compose.yml up -d
+```
 
-## Web pages
+The default host mapping is `172.17.0.1:64580`; change it to suit the host network. The Compose service mounts configuration and application data and checks `/api/v1/server/healthz`.
 
-| Path | Purpose |
+### Release binaries
+
+Download the matching `wordList-{os}-{arch}` server and `wordList-cli-{os}-{arch}` client from [GitHub Releases](https://github.com/apimgr/wordList/releases). Windows artifacts use `.exe`. Verify the published checksums and place the binaries in a directory on `PATH`.
+
+The project does not currently package a systemd unit or service installer. Run the server under your deployment's service manager and configure it to restart after failure.
+
+## Client
+
+The companion client can generate locally or call a configured server:
+
+```sh
+wordList-cli passphrase --words 8
+wordList-cli passphrase --words 6 --separator ' ' --capitalize=false
+```
+
+Use `wordList-cli --help` for available commands. Remote calls accept `--server` and `--token`; configure the primary server with `WORDLIST_SERVER_PRIMARY` or the client configuration file. Pass `--capitalize=false` to keep generated words lowercase. Do not place an operator token in a shared or automated client configuration.
+
+## Configuration
+
+On first start, the server creates `server.yml` and a restricted `secrets.yml` in the platform-specific configuration directory. The generated operator token is printed once. There is no web-based server configuration interface.
+
+| Setting | Default | Purpose |
+|---|---|---|
+| `server.address` | `0.0.0.0` | Listen address |
+| `server.port` | `64851` | Listen port; `PORT` overrides it in containers |
+| `server.baseurl` | `/` | Optional URL path prefix |
+| `server.mode` | `production` | Application mode |
+| `server.rate_limit.enabled` | `true` | Enable request rate limiting |
+| `server.tokens.max_linked` | `25` | Active linked-token limit per owner |
+| `server.tokens.cookie_max_age` | `1y` | Sliding owner-cookie lifetime |
+| `server.tokens.idle_purge_days` | `0` | Idle owner purge delay; zero disables it |
+| `server.i18n.default_language` | `en` | Default locale |
+
+The server reads `server.yml` from its configuration directory. In containers, `CONFIG_DIR` and `DATA_DIR` select configuration and data locations. See the [configuration guide](docs/configuration.md) for the complete settings list and proxy URL behavior.
+
+## API
+
+The canonical REST API base is `/api/v1`. Public word-list and passphrase routes do not require a token. Owner-token management routes require the specified bearer token; browser cookies are ignored by API routes.
+
+| Endpoint | Purpose |
 |---|---|
-| `/` | Word-list overview and links to search and generation |
-| `/generate` | No-JavaScript passphrase form |
-| `/search` | Search and browse the list |
-| `/server/about` | Service information |
-| `/server/help` | Usage help |
-| `/server/help/mcp` | MCP connection guidance |
-| `/server/privacy` | Privacy information |
-| `/server/terms` | Terms of use |
-| `/server/contact` | Abuse, DMCA, and privacy report forms (submission currently unavailable) |
-| `/server/dpo` | Configured DPO contact and privacy link |
-| `/server/security` | Security reporting and policy links |
-| `/server/security/policy` | Disclosure policy |
-| `/server/security/thanks` | Researcher acknowledgments |
-| `/server/preferences` | Browser preferences |
-| `/server/preferences/tokens` | Issue or restore a primary token; create, reveal, rotate, rename, expire, and revoke linked tokens |
-| `/server/preferences/sync` | Export and import browser preferences |
-| `/server/healthz` | Human-readable service status |
-| `/server/docs/swagger` | REST API reference |
-| `/server/docs/graphql` | GraphQL endpoint information |
+| `GET /api/v1/passphrase[/{count}]` | Generate a secure passphrase |
+| `GET /api/v1/random[/{count}]` | Return random words |
+| `GET /api/v1/search/{query}` | Search by prefix or substring |
+| `GET /api/v1/words` | Browse the word list with pagination |
+| `GET /api/v1/dice/{code}` | Resolve a dice code |
+| `GET /api/v1/letters[/{letter}]` | List starting letters or matching words |
+| `GET /api/v1/lengths/{length}` | List words of a selected length |
+| `GET /api/v1/stats`, `/count` | Read word-list statistics |
+| `GET /api/v1/server/healthz` | Read service health |
+| `GET /api/v1/server/swagger` | Retrieve the OpenAPI document |
+| `POST /api/v1/server/graphql` | Run a supported GraphQL query |
+| `POST /api/v1/server/preferences/tokens/primary` | Issue an owner token |
 
-## REST API
-
-The versioned API root is `/api/v1`. Word-list and passphrase endpoints are public. Required system endpoints use the authentication rules in AI.md. The primary-token issuance endpoint is public and ignores cookies; a valid bearer token prevents a second issuance.
-
-| Method and path | Purpose |
-|---|---|
-| `GET /api/v1/` | API overview |
-| `GET /api/v1/server/healthz` | JSON health status |
-| `GET /api/v1/server/about`, `/help`, `/privacy`, `/terms` | Server page content as JSON |
-| `GET /api/v1/server/dpo` | Configured DPO/general contact fallback and privacy URL |
-| `GET /api/v1/server/contact` | Contact form fields and anti-spam requirements |
-| `GET, POST /api/v1/server/preferences` | Read or save browser preferences |
-| `POST /api/v1/server/preferences/tokens/primary` | Issue an anonymous owner's primary token; returns the raw token once |
-| `POST /api/v1/server/preferences/tokens/primary/reveal` | Reveal the primary token using its bearer token |
-| `POST /api/v1/server/preferences/tokens/primary/rotate` | Replace the primary token using its bearer token |
-| `DELETE /api/v1/server/preferences/tokens/primary` | Delete the owner after last-four-character confirmation |
-| `GET /api/v1/server/preferences/tokens` | List masked owner token metadata |
-| `POST /api/v1/server/preferences/tokens` | Create a linked token; returns its raw value once |
-| `POST /api/v1/server/preferences/tokens/{id}/reveal` | Reveal a linked token |
-| `POST /api/v1/server/preferences/tokens/{id}/rotate` | Rotate a linked token in place |
-| `PATCH /api/v1/server/preferences/tokens/{id}` | Rename a linked token or change its expiry |
-| `DELETE /api/v1/server/preferences/tokens/{id}` | Revoke a linked token |
-| `GET /api/v1/server/preferences/sync` | Export preferences |
-| `GET /api/v1/server/preferences/sync/import` | Import preferences |
-| `GET /api/v1/server/swagger` | OpenAPI document |
-| `POST /api/v1/server/graphql` | GraphQL endpoint |
-| `GET /api/v1/random[/{count}]` | Random words (default 6, 1–100) |
-| `GET /api/v1/random[/{count}].txt` | Random words as plain text |
-| `GET /api/v1/passphrase[/{count}]` | Secure passphrase (default 6, 1–20) |
-| `GET /api/v1/passphrase[/{count}].txt` | Passphrase as plain text |
-| `GET /api/v1/search/{query}` | Search by prefix or `?mode=contains`; optional `limit` (1–1000) |
-| `GET /api/v1/words` | Paginated list (`page`, `per_page`, default 100) |
-| `GET /api/v1/dice/{code}` | Word for a five-digit dice code |
-| `GET /api/v1/letters/{letter}` | Words beginning with a letter |
-| `GET /api/v1/lengths/{length}` | Words of a specified length |
-| `GET /api/v1/stats`, `/letters`, `/count` | Dataset statistics, letters, and count |
-
-Append `.txt` where listed for plain-text responses. Passphrase endpoints accept `separator` (up to eight characters) and `capitalize` (`false` disables capitalization). JSON errors use the documented `ok`, `error`, and `message` fields.
+Append `.txt` to the supported word-list and passphrase routes for plain-text responses. Passphrase endpoints accept `separator` (up to eight characters) and `capitalize=false`. JSON errors use the documented `ok`, `error`, and `message` fields.
 
 ```sh
 curl -q -LSsf http://localhost:64851/api/v1/passphrase/8
@@ -88,27 +91,43 @@ curl -q -LSsf http://localhost:64851/api/v1/dice/11111
 curl -q -LSsf 'http://localhost:64851/api/v1/words?page=1&per_page=100'
 ```
 
-## GraphQL
+The GraphQL endpoint is `/api/v1/server/graphql`; it currently supports word count, word-list statistics, and word-list queries. Consult the [API guide](docs/api.md) for route details and examples.
 
-The GraphQL endpoint is `/api/v1/server/graphql`; the implementation currently supports word count, word-list statistics, and the full word list. Submit a JSON object with a `query` field. The API documentation page describes the endpoint.
+## Other
 
-## Languages
+The browser interface includes passphrase generation, search, service information, contact and security pages, preferences, and token management. The contact form currently accepts and validates anti-spam challenges but does not deliver submissions; this is an implementation limitation.
 
-The embedded locale set includes English, Spanish, French, German, Italian, and Arabic. Arabic uses right-to-left layout. See the [translation guide](docs/translating.md) for locale files, contribution conventions, and review checks.
+The embedded locale set includes English, Spanish, French, German, Italian, and Arabic. Arabic uses right-to-left layout. See the [translation guide](docs/translating.md).
 
-## CLI
+The word data is the [EFF Large Wordlist](https://www.eff.org/files/2016/07/18/eff_large_wordlist.txt).
+
+## Development
+
+Development instructions are for contributors.
+
+Go builds and tests run in the `casjaysdev/go:latest` container through the Makefile. Docker is required.
 
 ```sh
-wordList-cli passphrase --words 8
-wordList-cli passphrase --words 6 --separator ' '
+git clone https://github.com/apimgr/wordList.git
+cd wordList
+make dev
+make test
 ```
 
-The CLI accepts `--words` from 1 to 20, `--separator` up to eight characters, and `--lowercase` to disable capitalization. `--help` and `--version` are also available.
+`make dev` builds the server and client into a temporary directory. `make build` cross-compiles the configured platform matrix. `./tests/run_tests.sh` runs the basic Docker binary and API checks. Read [Development](docs/development.md) before contributing.
 
-## Docker
+## Disclaimer
 
-The Compose deployment is defined in `docker/docker-compose.yml`. The service publishes the configured container port and stores configuration and data in mounted directories. Its health check calls `/api/v1/server/healthz`. For automated binary and API checks, run `./tests/run_tests.sh`; it requires Docker and builds the server and CLI before running them in a disposable Alpine container. `make test` runs the Go test, vet, and coverage suite.
+This software is provided "as is" without warranty of any kind. Use it at your own risk.
 
-## Source and attribution
+- **No warranty:** The authors are not responsible for damages, data loss, or other issues arising from use of this software.
+- **No professional advice:** This software does not provide legal, financial, medical, or other professional advice.
+- **Third-party services:** The terms of connected external services apply separately.
+- **Security:** No software can be guaranteed free of vulnerabilities.
+- **Production use:** Evaluate the software and its configuration before deploying it in production.
 
-The word list is the [EFF Large Wordlist](https://www.eff.org/files/2016/07/18/eff_large_wordlist.txt). This project is distributed under the license in [LICENSE.md](LICENSE.md).
+By using this software, you acknowledge that you have read and understood this disclaimer.
+
+## License
+
+See [LICENSE.md](LICENSE.md) for the project license. The EFF word-list source has its own attribution and licensing terms.

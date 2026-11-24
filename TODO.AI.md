@@ -7,7 +7,7 @@ This list records verified implementation gaps that remain after synchronizing t
 1. Implement the mandatory server/API foundations and reconcile API route semantics, response envelopes, content negotiation, health output, security middleware, and project route inventory.
 2. Implement the complete standard server page family and shared page shell, including preferences/help hubs, MCP, contact, DPO, and security pages with their required APIs and workflows.
 3. Bring all rendered pages into PART 16 conformance: no-JS-first forms, accessible shared chrome, responsive theme tokens, PWA behavior, SEO, and removal of inline styles/scripts/handlers.
-4. Implement shared i18n for server and CLI, the required supported locale set and parity checks, and translate every user-facing string.
+4. Finish i18n alignment: wire the required language configuration, implement plural-message runtime/validation, and translate the remaining user-facing strings across server, CLI, API, email, and docs.
 5. Complete the required client behavior and align its command/config/update lifecycle with AI.md PART 32.
 6. Complete required root/project infrastructure and supporting docs/tests: provider workflows, Docker variants, service templates, integration and E2E scripts, page conformance, route coverage, and API/docs parity.
 7. Verify the complete implementation using the project-required container commands and report actual results.
@@ -45,4 +45,5 @@ These items were checked against AI.md and the current repository after the prev
 - Removed the unsupported unversioned `/graphql` route and changed the GraphQL API routes to POST-only.
 - Expanded the embedded OpenAPI document to cover the implemented JSON routes.
 - Added the required IDEA.md project route inventory and removed its unsupported `/graphql` product claim.
-- Added request-aware host/proto/port resolution, Host-header allow-listing, trusted-proxy configuration, and path-prefix routing/link handling for server-rendered pages and PWA metadata; tests cover spoof rejection, trusted proxy behavior, custom/default ports, and prefixed routes.
+- Added request-aware host/proto/port resolution, Host-header allow-listing, trusted-proxy configuration with DNS refresh, and path-prefix routing/link handling for server-rendered pages and PWA metadata; the startup banner uses the same host resolver. Tests cover spoof rejection, trusted proxy behavior, DNS cache expiry, custom/default ports, and prefixed routes.
+- Added translation registry and embedded-locale consistency checks for file-set parity, locale metadata, nonempty values, message keys, and interpolation placeholders; added coverage for invalid `Accept-Language` quality values and corrected Italian CLDR plural metadata.

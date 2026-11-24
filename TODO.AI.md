@@ -20,7 +20,7 @@ These items were checked against AI.md and the current repository after the prev
 
 - Add the required bearer-token validation and owner-token lifecycle, including the owner token page/API, cookie restore/reveal/rotation flows, route authorization, and API-only header authentication.
 - Implement the required MCP streamable HTTP endpoint and aliases, protocol/header/origin validation, OpenAPI-derived tools, and the live MCP help page/API. The current help page advertises an endpoint that is not registered.
-- Implement request-aware absolute URL resolution with validated Host handling and trusted-proxy gates for forwarded host/proto/port headers; use it consistently in canonical URLs, API docs, security files, sitemap, feeds, and `llms.txt`.
+- Finish request-aware URL resolution: current working tree validates hosts, gates forwarded host/proto/port/prefix headers on trusted peers, honors the `DOMAIN` allow-list and `server.baseurl`, resolves configured trusted-proxy DNS names every five minutes, and uses the resolver for absolute URLs, page links, redirects, manifest and service-worker scope. Still required: Tor/I2P runtime URL overrides, live domain learning, and parity audits for every URL-bearing route and client asset.
 - Replace contact POST's 503 response with the required two-step validated submission, persistent encrypted reports, SMTP delivery, replay/rate controls, and security-report flow. Add the installation-secret security ID and live security acknowledgments instead of empty/static pages.
 - Complete DPO, privacy, terms, security, preferences, and help page/API content from the specified config and product sources. The current DPO and legal pages are generic translations and the preferences/help registries omit required pages.
 - Wire SQLite to application state and implement required app-secret initialization, audit, token, report, rate-limit, and scheduler persistence. Add the required libsql driver/configuration path and database-mode tests.
@@ -45,3 +45,4 @@ These items were checked against AI.md and the current repository after the prev
 - Removed the unsupported unversioned `/graphql` route and changed the GraphQL API routes to POST-only.
 - Expanded the embedded OpenAPI document to cover the implemented JSON routes.
 - Added the required IDEA.md project route inventory and removed its unsupported `/graphql` product claim.
+- Added request-aware host/proto/port resolution, Host-header allow-listing, trusted-proxy configuration, and path-prefix routing/link handling for server-rendered pages and PWA metadata; tests cover spoof rejection, trusted proxy behavior, custom/default ports, and prefixed routes.

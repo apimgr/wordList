@@ -37,7 +37,7 @@ Configuration is created on first start in the platform-specific configuration d
 | `/server/security/policy` | Disclosure policy |
 | `/server/security/thanks` | Researcher acknowledgments |
 | `/server/preferences` | Browser preferences |
-| `/server/preferences/tokens` | Issue, restore, and reveal an anonymous owner's primary token |
+| `/server/preferences/tokens` | Issue, restore, reveal, rotate, forget, and revoke an anonymous owner's primary token |
 | `/server/preferences/sync` | Export and import browser preferences |
 | `/server/healthz` | Human-readable service status |
 | `/server/docs/swagger` | REST API reference |
@@ -45,7 +45,7 @@ Configuration is created on first start in the platform-specific configuration d
 
 ## REST API
 
-The versioned API root is `/api/v1`. Word-list and passphrase endpoints are public. Required system endpoints use the authentication rules in AI.md; owner-token issuance is public, and API token management requires the primary bearer token.
+The versioned API root is `/api/v1`. Word-list and passphrase endpoints are public. Required system endpoints use the authentication rules in AI.md. The primary-token issuance endpoint is public and ignores cookies; a valid bearer token prevents a second issuance.
 
 | Method and path | Purpose |
 |---|---|
@@ -56,6 +56,9 @@ The versioned API root is `/api/v1`. Word-list and passphrase endpoints are publ
 | `GET /api/v1/server/contact` | Contact form fields and anti-spam requirements |
 | `GET, POST /api/v1/server/preferences` | Read or save browser preferences |
 | `POST /api/v1/server/preferences/tokens/primary` | Issue an anonymous owner's primary token; returns the raw token once |
+| `POST /api/v1/server/preferences/tokens/primary/reveal` | Reveal the primary token using its bearer token |
+| `POST /api/v1/server/preferences/tokens/primary/rotate` | Replace the primary token using its bearer token |
+| `DELETE /api/v1/server/preferences/tokens/primary` | Delete the owner after last-four-character confirmation |
 | `GET /api/v1/server/preferences/sync` | Export preferences |
 | `GET /api/v1/server/preferences/sync/import` | Import preferences |
 | `GET /api/v1/server/swagger` | OpenAPI document |

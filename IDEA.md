@@ -140,6 +140,9 @@ Public word-list and passphrase routes are unauthenticated; mandatory AI.md syst
 | POST | `/api/v1/server/contact` | Per AI.md | Submit or confirm a validated contact or security report |
 | GET, POST | `/api/v1/server/preferences` | Per AI.md | Read or save browser preferences |
 | POST | `/api/v1/server/preferences/tokens/primary` | None; valid bearer token returns conflict | Issue a new anonymous owner and primary token; returns `owner_token` once |
+| POST | `/api/v1/server/preferences/tokens/primary/reveal` | Primary bearer token | Decrypt and return the primary token |
+| POST | `/api/v1/server/preferences/tokens/primary/rotate` | Primary bearer token | Replace the primary token in place and return its new value |
+| DELETE | `/api/v1/server/preferences/tokens/primary` | Primary bearer token | Delete the owner after last-four-character confirmation; return deleted token/resource counts |
 | GET | `/api/v1/server/preferences/sync` | None | Export supported preferences as a URL and code |
 | GET | `/api/v1/server/preferences/sync/import` | None | Import supported preferences from a URL |
 | GET | `/api/v1/server/dpo` | None | Return data-protection contact information |

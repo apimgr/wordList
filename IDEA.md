@@ -143,6 +143,12 @@ Public word-list and passphrase routes are unauthenticated; mandatory AI.md syst
 | POST | `/api/v1/server/preferences/tokens/primary/reveal` | Primary bearer token | Decrypt and return the primary token |
 | POST | `/api/v1/server/preferences/tokens/primary/rotate` | Primary bearer token | Replace the primary token in place and return its new value |
 | DELETE | `/api/v1/server/preferences/tokens/primary` | Primary bearer token | Delete the owner after last-four-character confirmation; return deleted token/resource counts |
+| GET | `/api/v1/server/preferences/tokens` | Primary bearer token | List masked primary and linked-token metadata |
+| POST | `/api/v1/server/preferences/tokens` | Primary bearer token | Create a named linked token with optional expiry; return the raw value once |
+| POST | `/api/v1/server/preferences/tokens/{id}/reveal` | Primary bearer token | Reveal one linked token |
+| POST | `/api/v1/server/preferences/tokens/{id}/rotate` | Primary bearer token | Rotate one linked token in place |
+| PATCH | `/api/v1/server/preferences/tokens/{id}` | Primary bearer token | Rename a linked token or update its expiry |
+| DELETE | `/api/v1/server/preferences/tokens/{id}` | Primary bearer token | Revoke a linked token |
 | GET | `/api/v1/server/preferences/sync` | None | Export supported preferences as a URL and code |
 | GET | `/api/v1/server/preferences/sync/import` | None | Import supported preferences from a URL |
 | GET | `/api/v1/server/dpo` | None | Return data-protection contact information |

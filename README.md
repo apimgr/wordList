@@ -37,7 +37,7 @@ Configuration is created on first start in the platform-specific configuration d
 | `/server/security/policy` | Disclosure policy |
 | `/server/security/thanks` | Researcher acknowledgments |
 | `/server/preferences` | Browser preferences |
-| `/server/preferences/tokens` | Issue, restore, reveal, rotate, forget, and revoke an anonymous owner's primary token |
+| `/server/preferences/tokens` | Issue or restore a primary token; create, reveal, rotate, rename, expire, and revoke linked tokens |
 | `/server/preferences/sync` | Export and import browser preferences |
 | `/server/healthz` | Human-readable service status |
 | `/server/docs/swagger` | REST API reference |
@@ -59,6 +59,12 @@ The versioned API root is `/api/v1`. Word-list and passphrase endpoints are publ
 | `POST /api/v1/server/preferences/tokens/primary/reveal` | Reveal the primary token using its bearer token |
 | `POST /api/v1/server/preferences/tokens/primary/rotate` | Replace the primary token using its bearer token |
 | `DELETE /api/v1/server/preferences/tokens/primary` | Delete the owner after last-four-character confirmation |
+| `GET /api/v1/server/preferences/tokens` | List masked owner token metadata |
+| `POST /api/v1/server/preferences/tokens` | Create a linked token; returns its raw value once |
+| `POST /api/v1/server/preferences/tokens/{id}/reveal` | Reveal a linked token |
+| `POST /api/v1/server/preferences/tokens/{id}/rotate` | Rotate a linked token in place |
+| `PATCH /api/v1/server/preferences/tokens/{id}` | Rename a linked token or change its expiry |
+| `DELETE /api/v1/server/preferences/tokens/{id}` | Revoke a linked token |
 | `GET /api/v1/server/preferences/sync` | Export preferences |
 | `GET /api/v1/server/preferences/sync/import` | Import preferences |
 | `GET /api/v1/server/swagger` | OpenAPI document |

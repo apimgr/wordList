@@ -79,7 +79,7 @@ The canonical REST API base is `/api/v1`. Public word-list and passphrase routes
 | `GET /api/v1/letters[/{letter}]` | List starting letters or matching words |
 | `GET /api/v1/lengths/{length}` | List words of a selected length |
 | `GET /api/v1/stats`, `/count` | Read word-list statistics |
-| `GET /api/v1/server/healthz` | Read service health |
+| `GET /api/v1/server/healthz` | Read service health; SQLite or word-list failures return `503` with public-safe check values |
 | `GET /api/v1/server/swagger` | Retrieve the OpenAPI document |
 | `GET /api/v1/server/help/mcp` | Read request-resolved MCP connection details and the live tool list |
 | `POST /api/v1/server/graphql` | Run a supported GraphQL query |

@@ -35,7 +35,7 @@ owner_token: wordList_owner_token_qwhzkfta
 
 **Non-goals:**
 - No user accounts, registration, or login of any kind
-- No admin web panel (server configured via `server.yml` only)
+- No admin web panel (server settings and page content are configured through files such as `server.yml` and `yaml.d/pages.yml`)
 - No user-submitted words (EFF Diceware dataset only, updated with EFF releases)
 - No definitions, parts of speech, or etymology
 - No paid tiers or API keys for the public word-list and passphrase features; required AI.md operator and owner token flows still apply to system functions
@@ -49,7 +49,7 @@ There are no end-user accounts or product roles. Public word-list and passphrase
 |-------|--------|
 | **Anonymous visitor (browser)** | Read public pages and use public word-list and passphrase features |
 | **Anonymous API client (curl/CLI)** | Read public word-list data and generate passphrases without an API key |
-| **Server operator** | Configures server via `server.yml` only; no web management interface |
+| **Server operator** | Configures server through `server.yml` and file-based area settings such as `yaml.d/pages.yml`; no web management interface |
 
 ### Data model & sensitivity
 
@@ -134,6 +134,7 @@ Public word-list and passphrase routes are unauthenticated; mandatory AI.md syst
 | GET | `/api/v1/server/healthz` | Per AI.md | Return the public-safe service health response |
 | GET | `/api/v1/server/about` | None | Return About page data as JSON |
 | GET | `/api/v1/server/help` | None | Return Help page data as JSON |
+| GET | `/api/v1/server/help/mcp` | None | Return resolved MCP connection details and the live tool registry |
 | GET | `/api/v1/server/privacy` | None | Return Privacy page data as JSON |
 | GET | `/api/v1/server/terms` | None | Return Terms page data as JSON |
 | GET | `/api/v1/server/contact` | None | Return contact form types, field descriptors, and anti-spam requirements |

@@ -14,6 +14,7 @@ WordList serves the EFF Large Wordlist for Diceware passphrase generation. The G
 - Look up dice codes, retrieve random words, search and browse the list, and read word-list statistics.
 - Use the responsive web interface without an account.
 - Call JSON or plain-text REST endpoints, or the GraphQL endpoint.
+- Connect MCP clients to the stateless Streamable HTTP endpoint using an owner bearer token.
 - Generate passphrases locally or from a configured server with `wordList-cli`.
 - Run without runtime word-list downloads; the EFF data is embedded in the server binary.
 
@@ -33,7 +34,7 @@ The default host mapping is `172.17.0.1:64580`; change it to suit the host netwo
 
 Download the matching `wordList-{os}-{arch}` server and `wordList-cli-{os}-{arch}` client from [GitHub Releases](https://github.com/apimgr/wordList/releases). Windows artifacts use `.exe`. Verify the published checksums and place the binaries in a directory on `PATH`.
 
-The project does not currently package a systemd unit or service installer. Run the server under your deployment's service manager and configure it to restart after failure.
+The server includes service management commands for supported operating systems. Use `wordList --service install` to install the service, then `wordList --service start`, `stop`, `restart`, or `status` to manage it. Configure restart behavior through the service manager for your deployment.
 
 ## Client
 
@@ -62,7 +63,7 @@ On first start, the server creates `server.yml` and a restricted `secrets.yml` i
 | `server.tokens.idle_purge_days` | `0` | Idle owner purge delay; zero disables it |
 | `server.i18n.default_language` | `en` | Default locale |
 
-The server reads `server.yml` from its configuration directory. In containers, `CONFIG_DIR` and `DATA_DIR` select configuration and data locations. See the [configuration guide](docs/configuration.md) for the complete settings list and proxy URL behavior.
+The server reads `server.yml` and optional file-based area settings such as `yaml.d/pages.yml` from its configuration directory. In containers, `CONFIG_DIR` and `DATA_DIR` select configuration and data locations. See the [configuration guide](docs/configuration.md) for the current settings and proxy URL behavior.
 
 ## API
 
@@ -80,7 +81,9 @@ The canonical REST API base is `/api/v1`. Public word-list and passphrase routes
 | `GET /api/v1/stats`, `/count` | Read word-list statistics |
 | `GET /api/v1/server/healthz` | Read service health |
 | `GET /api/v1/server/swagger` | Retrieve the OpenAPI document |
+| `GET /api/v1/server/help/mcp` | Read request-resolved MCP connection details and the live tool list |
 | `POST /api/v1/server/graphql` | Run a supported GraphQL query |
+| `POST /api/v1/server/mcp` | Use the API operations as authenticated MCP tools |
 | `POST /api/v1/server/preferences/tokens/primary` | Issue an owner token |
 
 Append `.txt` to the supported word-list and passphrase routes for plain-text responses. Passphrase endpoints accept `separator` (up to eight characters) and `capitalize=false`. JSON errors use the documented `ok`, `error`, and `message` fields.
@@ -92,6 +95,8 @@ curl -q -LSsf 'http://localhost:64851/api/v1/words?page=1&per_page=100'
 ```
 
 The GraphQL endpoint is `/api/v1/server/graphql`; it currently supports word count, word-list statistics, and word-list queries. Consult the [API guide](docs/api.md) for route details and examples.
+
+The MCP endpoint is `/api/v1/server/mcp` (also `/api/mcp` and `/mcp`). It requires a bearer token and MCP protocol version `2026-07-28`. Create a linked token for each MCP client and see the [API guide](docs/api.md) for connection details.
 
 ## Other
 
@@ -112,9 +117,10 @@ git clone https://github.com/apimgr/wordList.git
 cd wordList
 make dev
 make test
+make lint
 ```
 
-`make dev` builds the server and client into a temporary directory. `make build` cross-compiles the configured platform matrix. `./tests/run_tests.sh` runs the basic Docker binary and API checks. Read [Development](docs/development.md) before contributing.
+`make dev` builds the server and client into a temporary directory. `make build` cross-compiles the configured platform matrix. `make test` runs Go tests and vet with coverage enforcement; `make lint` runs vet, staticcheck, and golangci-lint. `./tests/run_tests.sh` runs the basic Docker binary and API checks. Read [Development](docs/development.md) before contributing.
 
 ## Disclaimer
 

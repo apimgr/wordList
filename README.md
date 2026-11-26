@@ -53,8 +53,8 @@ On first start, the server creates `server.yml` and a restricted `secrets.yml` i
 
 | Setting | Default | Purpose |
 |---|---|---|
-| `server.address` | `0.0.0.0` | Listen address |
-| `server.port` | `64851` | Listen port; `PORT` overrides it in containers |
+| `server.address` | `[::]` | Dual-stack listen address |
+| `server.port` | random `64000`–`64999` (`80` in an application container) | Listen port; `PORT` overrides it |
 | `server.baseurl` | `/` | Optional URL path prefix |
 | `server.mode` | `production` | Application mode |
 | `server.rate_limit.enabled` | `true` | Enable request rate limiting |
@@ -89,9 +89,10 @@ The canonical REST API base is `/api/v1`. Public word-list and passphrase routes
 Append `.txt` to the supported word-list and passphrase routes for plain-text responses. Passphrase endpoints accept `separator` (up to eight characters) and `capitalize=false`. JSON errors use the documented `ok`, `error`, and `message` fields.
 
 ```sh
-curl -q -LSsf http://localhost:64851/api/v1/passphrase/8
-curl -q -LSsf http://localhost:64851/api/v1/dice/11111
-curl -q -LSsf 'http://localhost:64851/api/v1/words?page=1&per_page=100'
+export SERVER_URL='https://your-public-host.example'
+curl -q -LSsf "$SERVER_URL/api/v1/passphrase/8"
+curl -q -LSsf "$SERVER_URL/api/v1/dice/11111"
+curl -q -LSsf "$SERVER_URL/api/v1/words?page=1&per_page=100"
 ```
 
 The GraphQL endpoint is `/api/v1/server/graphql`; it currently supports word count, word-list statistics, and word-list queries. Consult the [API guide](docs/api.md) for route details and examples.

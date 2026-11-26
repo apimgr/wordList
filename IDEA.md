@@ -132,6 +132,7 @@ Public word-list and passphrase routes are unauthenticated; mandatory AI.md syst
 | GET | `/api/v1/count` | None | Return the word count as JSON |
 | GET | `/api/v1/count.txt` | None | Return the word count as plain text |
 | GET | `/api/v1/server/healthz` | Per AI.md | Return the public-safe service health response |
+| GET | `/api/v1/server/auth/check` | Bearer token | Machine-only token validation; return `operator` or `owner` kind without echoing the token |
 | GET | `/api/v1/server/about` | None | Return About page data as JSON |
 | GET | `/api/v1/server/help` | None | Return Help page data as JSON |
 | GET | `/api/v1/server/help/mcp` | None | Return resolved MCP connection details and the live tool registry |
@@ -156,11 +157,12 @@ Public word-list and passphrase routes are unauthenticated; mandatory AI.md syst
 | GET | `/api/v1/server/security` | None | Return public security policy and reporting information |
 | POST | `/api/v1/server/mcp` | Bearer token | Streamable HTTP MCP endpoint; exposes the existing API operations as tools |
 | GET | `/api/v1/server/swagger` | None | Return the OpenAPI document |
-| POST | `/api/v1/server/graphql` | Per AI.md | Accept a JSON GraphQL query and return supported word count, statistics, or word-list fields |
+| GET, POST | `/api/v1/server/graphql` | Per AI.md | Accept read-only GraphQL queries; GET accepts query parameters and POST accepts JSON |
 | GET | `/api/healthz` | None | Unversioned health alias |
 | GET | `/api/swagger` | None | Unversioned OpenAPI alias |
-| POST | `/api/graphql` | None | Unversioned GraphQL alias |
+| GET, POST | `/api/graphql` | None | Unversioned GraphQL alias; GET accepts queries only |
 | POST | `/api/mcp` | Bearer token | Unversioned alias for the MCP endpoint |
 | POST | `/mcp` | Bearer token | Root alias for the MCP endpoint |
+| GET | `/api/autodiscover` | None or bearer | Unversioned discovery document with version, public origins, and CLI release metadata |
 
 The browser surface includes `/`, `/generate`, `/search`, `/server/about`, `/server/help`, `/server/help/mcp`, `/server/privacy`, `/server/terms`, `/server/contact`, `/server/dpo`, `/server/security`, `/server/security/policy`, `/server/security/thanks`, `/server/preferences`, `/server/preferences/tokens`, `/server/preferences/sync`, `/server/healthz`, `/server/docs/swagger`, and `/server/docs/graphql`. `/graphql` is not a supported route.

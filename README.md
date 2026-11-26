@@ -80,9 +80,11 @@ The canonical REST API base is `/api/v1`. Public word-list and passphrase routes
 | `GET /api/v1/lengths/{length}` | List words of a selected length |
 | `GET /api/v1/stats`, `/count` | Read word-list statistics |
 | `GET /api/v1/server/healthz` | Read service health; SQLite or word-list failures return `503` with public-safe check values |
+| `GET /api/v1/server/auth/check` | Validate a bearer token and return its kind without echoing the token |
+| `GET /api/autodiscover` | Discover the API version, public origins, and available CLI release metadata |
 | `GET /api/v1/server/swagger` | Retrieve the OpenAPI document |
 | `GET /api/v1/server/help/mcp` | Read request-resolved MCP connection details and the live tool list |
-| `POST /api/v1/server/graphql` | Run a supported GraphQL query |
+| `GET, POST /api/v1/server/graphql` | Run a read-only GraphQL query |
 | `POST /api/v1/server/mcp` | Use the API operations as authenticated MCP tools |
 | `POST /api/v1/server/preferences/tokens/primary` | Issue an owner token |
 
@@ -101,7 +103,7 @@ The MCP endpoint is `/api/v1/server/mcp` (also `/api/mcp` and `/mcp`). It requir
 
 ## Other
 
-The browser interface includes passphrase generation, search, About and Help pages, the configured privacy policy and DPO contact, terms, contact and security pages, preferences, and owner-token management. Privacy-policy deployment facts are configured under `server.privacy`; see the [configuration guide](docs/configuration.md). The contact form currently accepts and validates anti-spam challenges but does not deliver submissions; this is an implementation limitation.
+The browser interface includes passphrase generation, search, About and Help pages, the configured privacy policy and DPO contact, terms, contact and security pages, preferences, and owner-token management. Privacy-policy deployment facts are configured under `server.privacy`; see the [configuration guide](docs/configuration.md). Confirmed abuse, DMCA, and privacy submissions are emailed when SMTP is ready. Confirmed security reports are encrypted and stored for operator review; they are not emailed.
 
 The embedded locale set includes English, Spanish, French, German, Italian, and Arabic. Arabic uses right-to-left layout. See the [translation guide](docs/translating.md).
 

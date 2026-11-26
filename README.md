@@ -104,7 +104,7 @@ The MCP endpoint is `/api/v1/server/mcp` (also `/api/mcp` and `/mcp`). It requir
 
 ## Other
 
-The browser interface includes passphrase generation, search, About and Help pages, the configured privacy policy and DPO contact, terms, contact and security pages, preferences, and owner-token management. Privacy-policy deployment facts are configured under `server.privacy`; see the [configuration guide](docs/configuration.md). Confirmed abuse, DMCA, and privacy submissions are emailed when SMTP is ready. Confirmed security reports are encrypted and stored for operator review; they are not emailed.
+The browser interface includes passphrase generation, search, About and Help pages, the configured privacy policy and DPO contact, terms, contact and security pages, preferences, and owner-token management. The first-visit consent banner works without JavaScript; when data sales are enabled, the privacy page offers a CSRF-protected CCPA opt-out. Privacy-policy deployment facts and consent copy are configured under `server.privacy`; see the [configuration guide](docs/configuration.md). Confirmed abuse, DMCA, and privacy submissions are emailed when SMTP is ready. Confirmed security reports are encrypted and stored for operator review; they are not emailed.
 
 The embedded locale set includes English, Spanish, French, German, Italian, and Arabic. Arabic uses right-to-left layout. See the [translation guide](docs/translating.md).
 

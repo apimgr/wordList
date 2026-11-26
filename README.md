@@ -34,7 +34,7 @@ The default host mapping is `172.17.0.1:64580`; change it to suit the host netwo
 
 Download the matching `wordList-{os}-{arch}` server and `wordList-cli-{os}-{arch}` client from [GitHub Releases](https://github.com/apimgr/wordList/releases). Windows artifacts use `.exe`. Verify the published checksums and place the binaries in a directory on `PATH`.
 
-The server includes service management commands for supported operating systems. Use `wordList --service install` to install the service, then `wordList --service start`, `stop`, `restart`, or `status` to manage it. Configure restart behavior through the service manager for your deployment.
+The server includes service management commands for supported operating systems. Use `wordList --service --install` (or `wordList --service install`) to install, enable, and start the service. Use `wordList --service start`, `stop`, `restart`, `reload`, or `status` to manage it. Use `wordList --service --disable` to stop and disable automatic startup. `--service --uninstall` prompts before removing the service registration.
 
 ## Client
 
@@ -101,7 +101,7 @@ The MCP endpoint is `/api/v1/server/mcp` (also `/api/mcp` and `/mcp`). It requir
 
 ## Other
 
-The browser interface includes passphrase generation, search, service information, contact and security pages, preferences, and token management. The contact form currently accepts and validates anti-spam challenges but does not deliver submissions; this is an implementation limitation.
+The browser interface includes passphrase generation, search, About and Help pages, the configured privacy policy and DPO contact, terms, contact and security pages, preferences, and owner-token management. Privacy-policy deployment facts are configured under `server.privacy`; see the [configuration guide](docs/configuration.md). The contact form currently accepts and validates anti-spam challenges but does not deliver submissions; this is an implementation limitation.
 
 The embedded locale set includes English, Spanish, French, German, Italian, and Arabic. Arabic uses right-to-left layout. See the [translation guide](docs/translating.md).
 

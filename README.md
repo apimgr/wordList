@@ -119,6 +119,7 @@ Go builds and tests run in the `casjaysdev/go:latest` container through the Make
 git clone https://github.com/apimgr/wordList.git
 cd wordList
 make dev
+make format
 make test
 make lint
 ```

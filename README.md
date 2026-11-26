@@ -14,6 +14,7 @@ WordList serves the EFF Large Wordlist for Diceware passphrase generation. The G
 - Look up dice codes, retrieve random words, search and browse the list, and read word-list statistics.
 - Use the responsive web interface without an account.
 - Call JSON or plain-text REST endpoints, or the GraphQL endpoint.
+- Explore REST endpoints in the locally hosted Swagger UI and run GraphQL queries in GraphiQL; both follow the site theme.
 - Connect MCP clients to the stateless Streamable HTTP endpoint using an owner bearer token.
 - Generate passphrases locally or from a configured server with `wordList-cli`.
 - Run without runtime word-list downloads; the EFF data is embedded in the server binary.
@@ -97,7 +98,7 @@ curl -q -LSsf "$SERVER_URL/api/v1/dice/11111"
 curl -q -LSsf "$SERVER_URL/api/v1/words?page=1&per_page=100"
 ```
 
-The GraphQL endpoint is `/api/v1/server/graphql`; it currently supports word count, word-list statistics, and word-list queries. Consult the [API guide](docs/api.md) for route details and examples.
+The GraphQL endpoint is `/api/v1/server/graphql`; it provides read-only word-count, statistics, pagination, search, dice-code lookup, letter, and length queries. Its schema supports introspection and applies query-size, field-count, and nesting-depth limits. Consult the [API guide](docs/api.md) for details and examples.
 
 The MCP endpoint is `/api/v1/server/mcp` (also `/api/mcp` and `/mcp`). It requires a bearer token and MCP protocol version `2026-07-28`. Create a linked token for each MCP client and see the [API guide](docs/api.md) for connection details.
 

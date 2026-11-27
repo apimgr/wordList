@@ -1,5 +1,24 @@
 # TLS certificate lifecycle
 
+## ACME and Let's Encrypt
+
+Configure issuance under `server.ssl.letsencrypt`. HTTP-01 is the default and requires the certificate authority to reach the existing HTTP listener on port 80; TLS-ALPN-01 uses the existing HTTPS listener on port 443. Neither challenge starts a separate listener. DNS-01 requires no inbound port and supports wildcard certificates. When using HTTP-01 or TLS-ALPN-01, configure the server listener or reverse proxy to forward the standard ports to the application.
+
+```yaml
+server:
+  ssl:
+    enabled: true
+    letsencrypt:
+      enabled: true
+      email: operator@example.com
+      challenge: http-01
+      staging: false
+```
+
+For DNS-01, set `challenge: dns-01`, set `dns_provider` to a Lego provider name, and place that provider's flat environment-variable map under `server.ssl.letsencrypt.dns_credentials` in `secrets.yml`. These credential values are encrypted at rest and are never rendered or logged. Provider variable names and required fields come from [Lego's DNS provider documentation](https://go-acme.github.io/lego/dns/). Set `staging: true` to issue against Let's Encrypt staging while configuring a deployment; production is the default.
+
+The ACME account is stored under `{config_dir}/ssl/letsencrypt/account/{production|staging}/` with owner-only permissions. Application-managed certificates are renewed by the daily `ssl_renewal` scheduler task when 30 days or fewer remain. Renewal notifications are controlled by the `ssl_expiring`, `ssl_renewed`, and `ssl_renewal_failed` email event settings.
+
 The SSL package's lifecycle manager inspects the configured domains against the certificate locations in AI.md PART 15. It selects the first readable certificate and key pair whose certificate matches that domain and is currently valid:
 
 1. `/etc/letsencrypt/live/domain/` — system managed.

@@ -4,17 +4,17 @@ WordList is a public Diceware word-list and passphrase service. This guide docum
 
 ## Quick start
 
-Build the server and companion CLI in the Go toolchain container with `make dev`. The server listens on a random port from `64000` through `64999` by default (port `80` in an application container). Open `/` for the web interface or `/api/swagger` for the API reference.
+Follow the [installation guide](installation.md) to start WordList with Docker Compose, a release binary, or a system service. To build from a source checkout, use `make dev`; it builds the server and companion CLI in the Go toolchain container. The default listener uses a random port from `64000` through `64999` outside an application container and port `80` inside one.
 
 ## Features
 
 - The EFF Large Wordlist is embedded in the server binary.
 - Passphrases use the operating system cryptographic random source.
 - The REST API returns JSON by default and plain text on the documented `.txt` routes.
+- The server-rendered browser pages work without JavaScript and include accessible preferences, contact, privacy, security, and health flows.
 - MCP clients can call the API through the stateless Streamable HTTP endpoint with a linked bearer token.
-- The server-rendered generator works without JavaScript.
 - No account or API token is needed for public endpoints.
-- Optional country blocking uses local ip-location-db datasets and fails open when data is unavailable.
+- Operators can enable local GeoIP country policies, IP/domain blocklists, Tor and I2P services, metrics, and automated backups.
 
 ## Guides
 

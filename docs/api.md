@@ -49,7 +49,7 @@ When `server.healthz.root.enabled` is `true`, `GET /healthz` mounts the same fro
 
 | Method | Path | Purpose |
 |---|---|---|
-| GET | `/api/v1/server/healthz` | Health status; database or loaded word-list failure returns `503`; unavailable enabled overlays mark the service degraded with HTTP `200` and expose public-safe checks |
+| GET | `/api/v1/server/healthz` | Bare health payload with cached dependency checks, public-safe overlay state, restart/maintenance state, and persisted aggregate request statistics; unhealthy, maintenance, and shutdown states return `503` |
 | GET | `/api/v1/server/auth/check` | Machine-only bearer-token validation; returns token kind without echoing the token |
 | GET | `/api/v1/server/about` | About title and Markdown content derived from IDEA.md, or the language-resolved `server.branding.content.about` source; `format` identifies Markdown, HTML, or text |
 | GET | `/api/v1/server/help` | Localized help content and available help pages |
@@ -67,13 +67,15 @@ When `server.healthz.root.enabled` is `true`, `GET /healthz` mounts the same fro
 | GET, POST | `/api/v1/server/graphql` | Read-only GraphQL query endpoint; GET accepts `query`, optional `variables`, and optional `operationName` |
 | POST | `/api/v1/server/mcp` | Stateless Streamable HTTP MCP endpoint (Bearer token required) |
 
-The unversioned compatibility paths `/api/healthz`, `/api/swagger`, `/api/graphql`, `/api/mcp`, and `/mcp` are also available. `/api/autodiscover` returns the current API version, request origin and configured `DOMAIN` origins, plus the configured `cli_min_version`; `cli_versions` is empty until release binaries are provisioned in the server's distribution directory. It includes `onion` and `i2p` addresses only when their respective `server.tor.expose` or `server.i2p.expose` setting is enabled.
+The unversioned compatibility paths `/api/healthz`, `/api/swagger`, `/api/graphql`, `/api/mcp`, and `/mcp` are also available. `/api/autodiscover` returns the current API version, request origin and configured `DOMAIN` origins, plus the configured `cli_min_version`; `cli_versions` is empty until release binaries are provisioned in the server's distribution directory. It includes `onion` and `i2p` addresses only when their respective exposure settings are enabled. Requests to a Tor or I2P address return an empty `urls` list and include only the matching overlay address field, when that overlay is enabled and exposed.
 
 `GET /cli/binaries/wordList-cli-{os}-{arch}[.exe]` streams an operator-provisioned client binary only when its SHA-256 matches the checksum manifest. Downloads are public unless `cli.binary_download.require_auth` is enabled, in which case a valid bearer token is required. See the [CLI guide](cli.md) for update behavior and the [configuration guide](configuration.md) for the distribution directory.
 
 The privacy response uses the standard `{ "ok": true, "data": { ... } }` envelope. Its `ccpa.applicable` value follows `server.privacy.data.sold`, and `ccpa.user_opted_out` reflects the browser's `ccpa_opt_out` cookie. `content.operator_extension` and `content.operator_format` expose the language-resolved `server.branding.content.privacy` source; an empty value means the built-in policy is used without an operator extension. Generated passphrases are never stored.
 
-The `/server/healthz` HTML and text surfaces render uptime, timestamps, and visible counts in human-readable, request-language form. API JSON and API `.txt` responses retain machine values so monitoring clients can parse them reliably.
+All health routes render from one shared result. `/server/healthz` and the optional `/healthz` alias negotiate HTML, human-readable text for curl and other command-line clients, or JSON. The versioned and unversioned API routes return a bare JSON object by default; `.txt`, `Accept: text/plain`, and non-interactive API requests without an explicit format receive dot-notation machine text. API JSON/text use compact uptime and RFC 3339 UTC timestamps; frontend HTML/text localize labels and humanize durations, timestamps, and counts.
+
+Health JSON fields follow a stable order: `project`, `status`, optional `pending_restart`, `restart_reason`, and `maintenance`, then version/build/runtime values, `features`, `checks`, and `stats`. Dataset checks are cached and refreshed by the scheduler at most every 60 seconds and after data updates; health requests do not scan datasets or query the database for statistics. The core database, cache, disk, and scheduler probes also run outside request handling. Health output contains only public-safe status values and aggregate counts. The status is `503` only for `unhealthy`, `maintenance`, or `shutting_down`; `degraded` and `restart_required` remain `200`.
 
 ## Model Context Protocol
 

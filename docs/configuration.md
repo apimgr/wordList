@@ -1,6 +1,6 @@
 # Configuration
 
-The server reads `server.yml` from the OS-specific configuration directory and creates a default file on first start. It then applies recognized settings from regular `.yml` and `.yaml` files in `yaml.d/` in filename order, so later files override earlier ones. The configuration file and drop-ins are restricted to owner read/write access, and `yaml.d/` to owner access. Page content belongs in `yaml.d/pages.yml`. The server also creates `secrets.yml` with an `adm_` operator token on first start; the secret file and its parent directory are restricted to owner access. The token is printed once to the startup console. No web-based configuration interface is provided.
+The server reads `server.yml` from the OS-specific configuration directory and creates a default file on first start. `server.yml` holds node-specific settings; other settings belong in the relevant `yaml.d/` area file, such as page content in `yaml.d/pages.yml`. Drop-ins are merged in byte-wise filename order after `server.yml`, and `secrets.yml` is merged last. Later values replace earlier values. The server migrates older all-in-one configurations into area files on startup. Configuration files, drop-ins, and secrets are private to the service account; `yaml.d/` is owner-only. The server creates `secrets.yml` with an `adm_` operator token on first start and prints that token once to the startup console. No web-based configuration interface is provided.
 
 ## Current settings
 
@@ -176,7 +176,7 @@ server:
         Example prompt: Generate an eight-word passphrase separated by hyphens.
 ```
 
-The Markdown is rendered with raw HTML disabled and sanitized output. Changes to `server.yml`, `secrets.yml`, and recognized `.yml` or `.yaml` drop-ins are validated and reloaded within about one second; in-flight requests finish with the previous settings before the new values apply. Listener address/port and TLS, database, daemon, PID-file, and Tor settings require restart and log a warning. A changed encryption key remains inactive until managed key rotation is implemented. Runtime asset reload and configuration options not represented by the current schema are not supported yet.
+The Markdown is rendered with raw HTML disabled and sanitized output. Changes to `server.yml`, `secrets.yml`, recognized `.yml` or `.yaml` drop-ins, and the `assets/` directory are watched and reloaded. Invalid values fall back to their defaults; an unparseable configuration file keeps its last good copy. Listener address/port, TLS, database, cache, daemon, PID-file, and Tor settings require a restart. Rotate `server.security.encryption_key` with `wordList --maintenance secret rotate encryption_key`; do not change it by editing the key directly, because rotation must re-encrypt existing protected values. Settings not represented by the configuration schema are not available.
 
 ## Overlay-network configuration
 
@@ -213,7 +213,24 @@ Set `I2P_ENABLED=true|false` to override the configured I2P activation. The `--i
 
 When I2P is enabled, the built-in `i2p_health` task checks the provider every 10 minutes and queues a restart if an active provider has stopped responding. It is not registered when I2P is disabled.
 
-The listener can also be overridden with `--address`, `--port`, `LISTEN`, and `PORT`; a CLI flag takes precedence over its environment variable, which takes precedence over the configured value. `--config`, `--data`, `--cache`, `--log`, `--backup`, and `--pid` select the corresponding paths. The path flags take precedence over their matching `*_DIR` environment variables.
+## Environment variables
+
+These are the supported environment variables. Server settings do not have a generic `{PROJECT_NAME}_{SECTION}_{KEY}` environment override. For settings with both a flag and environment variable, the command-line flag takes precedence.
+
+| Variable | Scope and behavior |
+|---|---|
+| `NO_COLOR` | Runtime; a non-empty value disables ANSI color and emoji output unless an explicit setting overrides it. |
+| `TERM` | Runtime; `TERM=dumb` disables ANSI escapes and forces CLI mode. |
+| `DOMAIN` | Runtime; comma-separated public hostnames used for URL and host resolution. |
+| `PORT`, `LISTEN`, `MODE`, `DEBUG`, `PID_FILE`, `I2P_ENABLED` | Runtime; listen port/address, application mode, debug flag, PID path, and I2P activation. `--port`, `--address`, `--mode`, `--debug`, `--pid`, and `--i2p` take precedence where applicable. |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM_NAME`, `SMTP_FROM_EMAIL`, `SMTP_TLS` | Runtime SMTP settings; credentials belong in `secrets.yml`. If `SMTP_HOST` is set, relay autodetection is skipped. |
+| `CONFIG_DIR`, `DATA_DIR`, `LOG_DIR`, `BACKUP_DIR`, `CACHE_DIR`, `DATABASE_DIR` | Directory overrides applied at every startup. The matching `--config`, `--data`, `--log`, `--backup`, or `--cache` flag takes precedence. `DATABASE_DIR` has no CLI flag. |
+| `APPLICATION_NAME`, `APPLICATION_TAGLINE` | First-run initialization only; seed the branding settings, then are ignored. |
+| `DATABASE_DRIVER`, `DATABASE_URL`, `CACHE_URL` | First-run initialization only; seed the database/cache connection. Later environment changes do not replace the saved configuration. Credential-bearing URLs are stored in `secrets.yml`. |
+
+Directory environment variables are read on every start, not from `server.yml`. Database and cache connection variables are initialization-only. Do not assume a setting is environment-overridable unless it appears in this table.
+
+`SMTP_PASSWORD` is a supported runtime variable, but storing relay credentials in `secrets.yml` is preferred. When no SMTP host is configured and `SMTP_HOST` is unset, the server probes candidate relays; failure to find one leaves email disabled without preventing startup.
 
 The built-in scheduler creates a daily full backup at 02:00 in `server.scheduler.timezone` and replaces the cumulative daily incremental. Set `server.scheduler.tasks.backup_hourly.enabled: true` to enable hourly incrementals. Both tasks use the configured backup retention, disk threshold, encryption password, and restore verification limits. Set a task's `retry_on_fail: true` and optional `retry_delay` to retry failures up to three times with exponential backoff. Restore validates the full archive before changing files, uses rollback files to recover previous destinations if installation fails, and preserves the target installation's operator token.
 
@@ -236,8 +253,8 @@ For a path-mounted deployment, set `server.baseurl: /wordlist` or send a validat
 
 The DPO page always links to the privacy policy. On clearnet it displays the configured DPO name and email when present; otherwise it uses the general contact email, then links to the security page if no address is configured. On Tor it hides the configured DPO name and clearnet email and shows only `server.tor.contact_email`, if set. The server does not invent or expose an administrator address.
 
-The `assets/` directory is not yet part of runtime asset delivery or reload. Encryption-key changes remain pending managed rotation; listener address and port, TLS, database, daemon, PID-file, and Tor changes require a restart.
+Runtime assets are served from the configuration `assets/` directory and are reloaded when that directory changes. Encryption-key rotation is available through `wordList --maintenance secret rotate encryption_key`; listener address and port, TLS, database, cache, daemon, PID-file, and Tor changes require a restart.
 
-The generated operator token is used by the protected token-management API and MCP operator tools. Generated metrics scraper tokens and webhook signing secrets are stored in `secrets.yml` and are never printed. `--maintenance mode` and restore require root or the service user's operator token; other maintenance authorization workflows remain incomplete.
+The generated operator token is used by protected token-management operations and MCP operator tools. Generated metrics scraper tokens and webhook signing secrets are stored in `secrets.yml` and are never printed. Sensitive maintenance operations have explicit authorization rules: setup is first-run-only or root; restore requires an empty database, root, or the operator token; mode changes require root or the service user's operator token; PGP private-key import/export/delete and installation/encryption-secret rotation require root or the operator token plus typed confirmation; linked-token revocation requires root or the operator token plus confirmation. See `wordList --maintenance --help` for available maintenance commands.
 
 The audit log is the authoritative JSON Lines record and uses a SHA-256 chain with `audit.anchor`; SQLite `audit_log` rows are a best-effort query mirror. Token lifecycle, server startup/shutdown, generated-secret, integrity, and strict rate-limit events are recorded when their category is enabled. Daily rotation preserves the chain anchor, applies the configured retention, and optionally compresses retained archives.

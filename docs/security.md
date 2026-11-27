@@ -16,7 +16,10 @@ The consent banner uses a server-rendered, CSRF-protected POST and works without
 
 ## Public security endpoints
 
-- `/.well-known/security.txt` is the canonical RFC 9116 contact file. On clearnet it publishes the configured private vulnerability reporting URL, an instance contact URL with a rolling identifier, the optional configured security email, the security policy URL, and a one-year expiry. On Tor it uses onion URLs and publishes only `server.tor.contact_email` when configured; it never falls back to clearnet reporting or contact addresses. The identifier is derived from a persistent 32-byte installation secret stored in SQLite. `/security.txt` returns `404`.
+- `/.well-known/security.txt` is the canonical RFC 9116 file. `/security.txt` returns `404`.
+- `/.well-known/pgp-key.asc` is available while a security keypair exists. WKD paths under `/.well-known/openpgpkey/` are available only when a key and matching security-contact domain are configured.
+- `/.well-known/llms.txt` and `/llms.txt` describe the public API and MCP entry point.
+- The security.txt file publishes the configured private vulnerability reporting URL, an instance contact URL with a rolling identifier, the optional configured security email, the security policy URL, and a one-year expiry. On Tor it uses onion URLs and publishes only `server.tor.contact_email` when configured; it never falls back to clearnet reporting or contact addresses. The identifier is derived from a persistent 32-byte installation secret stored in SQLite.
 - `/server/healthz` and `/api/v1/server/healthz` expose service health and word count.
 - `/server/security` and `/server/security/policy` publish security reporting information and policy. Tor requests receive onion URLs and the configured Tor contact email only.
 - `/server/contact` renders abuse, DMCA, privacy, or security report forms with CSRF and arithmetic challenge controls. Security mode requires the current or previous 48-hour identifier and echoes a valid identifier only in the hidden revalidation field. Invalid identifiers fall back to ordinary report mode. Every form uses a signed review step. Field descriptors drive conditional, enum, and length validation; report text links must point to an allowed host, and name/subject fields reject links. A confirmed security report is encrypted at rest and returns a tracking ID. When SMTP is ready, the maintainer receives only the encrypted report body and the researcher receives a content-free status link. Missing SMTP does not prevent secure storage. Use GitHub private vulnerability reporting as the primary reporting channel.
@@ -25,5 +28,11 @@ The consent banner uses a server-rendered, CSRF-protected POST and works without
 - `/server/security/thanks` lists credited researchers after disclosure, including the disclosure year and severity. `/api/v1/server/security` returns the same public entries in its `thanks` field. Hall-of-fame rows contain no contact information and outlive report retention.
 - Closed reports are retained for `server.security.reports.retention_days` days (default 365). The non-disableable daily `security_cleanup` task deletes expired closed reports; open reports are retained.
 - `/server/docs/swagger` publishes the OpenAPI documentation.
+
+Unknown `/.well-known/*` paths return `404`; the namespace does not serve a directory listing or arbitrary configured files. The HTTP-01 ACME challenge path is served only while its challenge handler is active.
+
+## Monitoring endpoints
+
+Metrics are operational endpoints, not public discovery surfaces. `/server/metrics`, its Prometheus, Grafana, and Loki service paths, the `/api/v1/server/metrics` and `/api/metrics` aliases, and the default-enabled `/metrics` aliases require their own service bearer token from `secrets.yml`. The operator can disable root aliases with `server.metrics.root.enabled: false` or disable all metrics routes with `server.metrics.enabled: false`. `server.metrics.auth.allow_unauthenticated: true` removes token checks for every metrics service and is only appropriate behind network access controls.
 
 The configured `server.token` is accepted as the operator Bearer credential for MCP. OpenAPI operations marked `x-operatorOnly` are hidden from other MCP callers and rejected when called with a non-operator token; no operations currently carry that marker. Repository vulnerabilities should be reported through [GitHub's private vulnerability reporting](https://github.com/apimgr/wordList/security/advisories/new). The instance form is the secondary disclosure channel for deployed-instance findings.

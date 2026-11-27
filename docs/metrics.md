@@ -1,65 +1,33 @@
-# Metrics package
+# Metrics
 
-`src/metrics` provides an isolated Prometheus registry for application
-instrumentation. Its default namespace is `wordlist`, derived from the project
-name by lowercasing it and replacing each run of non-alphanumeric characters
-with one underscore. The package exposes
-`Registry.Handler()` as Prometheus text exposition; the server owns endpoint
-registration, bearer-token protection, configuration, and collector scheduling.
+WordList exposes Prometheus text, an importable Grafana dashboard, and recent Loki-compatible log streams. These are internal monitoring endpoints. Keep them behind a firewall or private reverse proxy even when bearer authentication is enabled.
 
-## Use
+## Endpoints
 
-The server creates one registry at startup and passes build metadata through
-`metrics.Options`. Its HTTP middleware records every request using bounded
-route labels. A 30-second collector samples Go runtime and system data when
-those groups are enabled. SQLite connections, authentication, tokens,
-scheduler tasks, rate limits, passphrase generation, word lookups, Tor, and
-bounded caches are wired to the registry.
+| Service | Paths | Response |
+|---|---|---|
+| Prometheus | `/server/metrics`, `/server/metrics/prometheus`, `/api/v1/server/metrics`, `/api/v1/server/metrics/prometheus`, `/api/metrics`, `/api/metrics/prometheus` | Prometheus text exposition |
+| Grafana | The same path prefixes with `/grafana` | Importable dashboard JSON |
+| Loki | The same path prefixes with `/loki` | Recent structured log entries in Loki stream JSON format |
 
-The API is intentionally instance-based so the server can control registry
-lifecycle and avoid global collectors:
+The `/metrics`, `/metrics/prometheus`, `/metrics/grafana`, and `/metrics/loki` root aliases are enabled by default and can be disabled with `server.metrics.root.enabled`. Aliases invoke the same handler directly and do not redirect. All metrics routes return `404` when `server.metrics.enabled` is false.
 
-- `New(Options) *Registry`
-- `Handler() http.Handler`
-- `HTTPMiddleware(http.Handler) http.Handler`
-- `SetApplicationInfo(version, commit, buildDate, goVersion string)`
-- `UpdateUptime()` and `UpdateRuntime()`
-- `SetSystemStats(cpuPercent, memoryPercent, memoryUsed, memoryTotal, diskPercent, diskUsed, diskTotal float64)`
-- `ObserveDBQuery(operation, table string, duration time.Duration, err error)`
-- `SetDBConnections(open, inUse int)`, `RecordDBBusy()`, and `ObserveDBWriteWait(time.Duration)`
-- `RecordCacheHit(cache string)`, `RecordCacheMiss(cache string)`, `RecordCacheEviction(cache string)`, and `SetCacheStats(cache string, items, bytes int64)`
-- `RecordAuth(method, status string)` and `SetOwnerTokens(primary, linked int)`
-- `RecordSchedulerStart(task string)` and `RecordSchedulerEnd(task string, duration time.Duration, err error)`
-- `RecordRateLimit(limit, status string)`, `RecordPassphraseGenerated()`, and `RecordWordLookup()`
-- `SetTorStatus(enabled, running, circuitEstablished bool)` and `RecordTorRequest()`
+Each service uses its own bearer token from `server.metrics.auth.tokens.{prometheus,grafana,loki}` in `secrets.yml`. Empty tokens are generated and saved at startup. Supply them in the HTTP `Authorization: Bearer …` header; query-string tokens are not accepted. Set `server.metrics.auth.allow_unauthenticated: true` only on a network protected by firewall rules. This setting bypasses token checks for all three services.
 
-## Exported metric groups
+Example Prometheus scrape configuration:
 
-All metrics use the `wordlist_` prefix by default. HTTP request count and
-duration, request and response body sizes, active requests, database query and
-error counts, query duration, pool connections, SQLite busy and write-wait
-metrics, auth attempts, owner-token counts, scheduler runs/duration/running/last
-run, rate-limit counts, application info/start/uptime, Go runtime stats, system
-CPU/memory/data-directory disk stats, passphrase generation, word lookups, and
-Tor availability/request metrics are available from the registry. Cache metrics
-cover hits, misses, evictions, current item count, and bytes. Histogram buckets
-are defined in the package and are stable instrumentation details.
+```yaml
+scrape_configs:
+  - job_name: wordList
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["app.internal:8080"]
+    authorization:
+      credentials_file: /run/secrets/wordlist-prometheus-token
+```
 
-HTTP labels use allow-listed methods, response status codes, and a fixed route
-pattern list. Unknown routes collapse to `other`; query strings are ignored.
-Database operation, table, cache name, auth method/status, scheduler task, and
-rate-limit labels also use allow-lists. Cache names are limited to `blocklist`,
-`geoip`, `rate_limit`, `tokens`, and `trusted_proxy_dns`; unknown names collapse
-to `other`. Disk labels use the fixed value `data_dir`. The
-package never labels metrics with client addresses, request or token IDs,
-credentials, body contents, arbitrary paths, SQL text, or raw error messages.
-The registry retains counters and gauges in memory only; it does not persist
-per-user measurements or metric samples.
+## Metric coverage
 
-The server serves Prometheus text at `/server/metrics/prometheus` and provides
-the Grafana dashboard and Loki log views at the corresponding service paths.
-The same handlers are available through configured root and API aliases.
-Metrics are internal: each service has its own bearer token, and the default
-configuration does not allow unauthenticated access. The optional
-`server.metrics.include_runtime` and `server.metrics.include_system` settings
-control their respective metric groups.
+The registry contains application version and uptime, HTTP request counts/durations/sizes and active requests, database queries and pool state, cache activity and size, authentication and owner-token counts, scheduler activity, rate limits, passphrase generation, word lookup, Tor status/requests, and selected Go runtime and system measurements. System and runtime groups can be disabled with `server.metrics.include_system` and `server.metrics.include_runtime`.
+
+Metrics use the `wordlist_` prefix. HTTP routes and other label values are bounded by allow-lists; unknown values collapse to `other`. Client addresses, request or token IDs, credentials, body contents, arbitrary paths, SQL text, and raw errors are not metric labels. Samples are held in memory and are not persisted per user.

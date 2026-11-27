@@ -98,7 +98,7 @@ The canonical REST API base is `/api/v1`. Public word-list and passphrase routes
 | `GET /api/v1/server/healthz` | Read service health; SQLite or word-list failures return `503` with public-safe check values |
 | `GET /healthz` | Optional same-handler health alias when `server.healthz.root.enabled` is true |
 | `GET /api/v1/server/auth/check` | Validate a bearer token and return its kind without echoing the token |
-| `GET /api/autodiscover` | Discover the current API version, public origins, configured minimum CLI version, and opt-in onion/I2P addresses |
+| `GET /api/autodiscover` | Discover the current API version, public origins, configured minimum CLI version, and opt-in onion/I2P addresses; Tor and I2P requests receive no public origins and only their matching exposed address |
 | `GET /api/v1/server/swagger` | Retrieve the OpenAPI document |
 | `GET /api/v1/server/help/mcp` | Read request-resolved MCP connection details and the live tool list |
 | `GET, POST /api/v1/server/graphql` | Run a read-only GraphQL query |

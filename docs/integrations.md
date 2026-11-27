@@ -1,6 +1,16 @@
 # Integrations and discovery
 
-WordList exposes a public REST API, GraphQL, and MCP endpoints. SMTP can be configured for contact notifications; there are no other outbound API integrations enabled by default. Configured trusted-proxy hostnames are resolved periodically through the system DNS resolver.
+WordList exposes a public REST API, GraphQL, and MCP endpoints. Outbound integrations include SMTP notifications, release checks, GeoIP/blocklist data downloads, Let's Encrypt ACME, and optional public-key publication to configured OpenPGP keyservers. Configured trusted-proxy hostnames are resolved periodically through the system DNS resolver.
+
+## Server and CLI discovery
+
+`GET /api/autodiscover` returns JSON containing the service name and version, current API version, usable service URLs, published CLI platform versions and SHA-256 digests, and the configured minimum CLI version. Overlay addresses are included only when the corresponding `server.tor.expose` or `server.i2p.expose` setting is enabled. Requests received over an overlay do not disclose clearnet service URLs.
+
+The CLI updater can use operator-provisioned artifacts in `cli.binary_download.dir` (default `{data_dir}/cli`). Publish a `version.txt`, `sha256.txt`, and platform-named CLI binaries there; only binaries with matching checksums are advertised. Downloads use `/cli/binaries/{platform-binary-name}`. Set `cli.binary_download.require_auth: true` to require a bearer token for downloads. Do not put untrusted binaries in this directory.
+
+The service publishes its API catalog at `/.well-known/llms.txt` and `/llms.txt`, OpenAPI JSON at `/api/swagger`, and GraphQL at `/api/graphql`. The versioned API forms are `/api/v1/server/swagger` and `/api/v1/server/graphql`. MCP is stateless Streamable HTTP at `/api/v1/server/mcp`, with direct aliases `/api/mcp` and `/mcp`; each request requires a bearer token and an allowed Origin when an Origin header is sent. Use a linked owner token for an individual MCP client. The operator token exposes operator-only tools only when an operation is explicitly marked for operators.
+
+WordList does not provide OAuth/OIDC, webhooks, federated identity, or external identity-provider login.
 
 ## Tor hidden service
 
@@ -25,6 +35,9 @@ The address is omitted from autodiscovery and its hostname field is empty in hea
 - `/robots.txt` provides crawler guidance. `/.well-known/security.txt` is the canonical RFC 9116 security contact file; `/security.txt` returns `404`.
 - `/sitemap.xml` lists the currently allowed public HTML pages; it excludes the contact submission form and API routes.
 - `/manifest.json` and `/sw.js` provide the web app manifest and service worker.
+- `/.well-known/pgp-key.asc` publishes the active security-report encryption key while one exists. OpenPGP Web Key Directory is available at `/.well-known/openpgpkey/hu/{hash}` and its policy endpoint only when the key exists, a valid security contact is configured, and the request host matches the contact domain.
+
+The service's well-known namespace is intentionally limited to the paths documented here. Unknown `/.well-known/*` paths return `404`; WordList does not enable WebFinger, OpenID provider metadata, Android App Links, Apple association, or MTA-STS.
 
 The service worker activates automatically on first install. When an updated worker is ready, the page offers **Update now** or **Later**; choosing **Update now** activates the waiting worker and reloads the page, with a five-second fallback if the browser does not report control handover. Update prompts follow the page's selected language.
 

@@ -16,6 +16,8 @@ WordList serves the EFF Large Wordlist for Diceware passphrase generation. The G
 - Call JSON or plain-text REST endpoints, or the GraphQL endpoint.
 - Explore REST endpoints in the locally hosted Swagger UI and run GraphQL queries in GraphiQL; both follow the site theme.
 - Connect MCP clients to the stateless Streamable HTTP endpoint using an owner bearer token.
+- Host a Tor onion service when Tor is installed; enable Tor-routed outbound requests separately.
+- Run an I2P eepsite, enabled by default in application containers and opt-in elsewhere.
 - Generate passphrases locally or from a configured server with `wordList-cli`.
 - Run without runtime word-list downloads; the EFF data is embedded in the server binary.
 
@@ -82,7 +84,7 @@ The canonical REST API base is `/api/v1`. Public word-list and passphrase routes
 | `GET /api/v1/stats`, `/count` | Read word-list statistics |
 | `GET /api/v1/server/healthz` | Read service health; SQLite or word-list failures return `503` with public-safe check values |
 | `GET /api/v1/server/auth/check` | Validate a bearer token and return its kind without echoing the token |
-| `GET /api/autodiscover` | Discover the API version, public origins, and available CLI release metadata |
+| `GET /api/autodiscover` | Discover the current API version, public origins, configured minimum CLI version, and opt-in onion/I2P addresses |
 | `GET /api/v1/server/swagger` | Retrieve the OpenAPI document |
 | `GET /api/v1/server/help/mcp` | Read request-resolved MCP connection details and the live tool list |
 | `GET, POST /api/v1/server/graphql` | Run a read-only GraphQL query |
@@ -104,7 +106,7 @@ The MCP endpoint is `/api/v1/server/mcp` (also `/api/mcp` and `/mcp`). It requir
 
 ## Other
 
-The browser interface includes passphrase generation, search, About and Help pages, the configured privacy policy and DPO contact, terms, contact and security pages, preferences, and owner-token management. The first-visit consent banner works without JavaScript; when data sales are enabled, the privacy page offers a CSRF-protected CCPA opt-out. Privacy-policy deployment facts and consent copy are configured under `server.privacy`; see the [configuration guide](docs/configuration.md). Confirmed abuse, DMCA, and privacy submissions are emailed when SMTP is ready. Confirmed security reports are encrypted and stored for operator review; they are not emailed.
+The browser interface includes passphrase generation, search, About and Help pages, the configured privacy policy and DPO contact, terms, contact and security pages, preferences, and owner-token management. The first-visit consent banner works without JavaScript; when data sales are enabled, the privacy page offers a CSRF-protected CCPA opt-out. Privacy-policy deployment facts and consent copy are configured under `server.privacy`; see the [configuration guide](docs/configuration.md). Onion responses use `server.tor.contact_email` when configured and never fall back to clearnet contact addresses. Confirmed abuse, DMCA, and privacy submissions are emailed when SMTP is ready. Confirmed security reports are encrypted and stored for operator review; they are not emailed.
 
 The embedded locale set includes English, Spanish, French, German, Italian, and Arabic. Arabic uses right-to-left layout. See the [translation guide](docs/translating.md).
 

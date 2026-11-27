@@ -18,6 +18,7 @@ WordList serves the EFF Large Wordlist for Diceware passphrase generation. The G
 - Connect MCP clients to the stateless Streamable HTTP endpoint using an owner bearer token.
 - Host a Tor onion service when Tor is installed; enable Tor-routed outbound requests separately.
 - Run an I2P eepsite, enabled by default in application containers and opt-in elsewhere.
+- Use local ip-location-db country data with optional deny or allow country policy; updates run weekly and missing data fails open.
 - Generate passphrases locally or from a configured server with `wordList-cli`.
 - Run without runtime word-list downloads; the EFF data is embedded in the server binary.
 
@@ -60,6 +61,14 @@ On first start, the server creates `server.yml` and a restricted `secrets.yml` i
 | `server.port` | random `64000`–`64999` (`80` in an application container) | Listen port; `PORT` overrides it |
 | `server.baseurl` | `/` | Optional URL path prefix |
 | `server.mode` | `production` | Application mode |
+| `server.update.branch` | `stable` | Scheduled release channel (`stable`, `beta`, or `devel`) |
+| `server.update.auto_install` | `false` | Stage eligible releases for elevated non-Windows services |
+| `server.update.defer_days` | `0` | Minimum release age before scheduled update checks notify or stage it |
+| `server.scheduler.timezone` | `America/New_York` | Timezone for built-in scheduled tasks |
+| `server.scheduler.tasks.update_check.schedule` | `0 6 * * *` | Daily eligible release check; operator notification is once per version |
+| `server.geoip.enabled` | `true` | Enable local ASN, Country, and City GeoIP data; databases download at first start and update weekly |
+| `server.geoip.deny_countries` / `allow_countries` | `[]` / `[]` | Optional ISO alpha-2 country policy; `allow_countries` takes precedence and IP allowlist entries bypass it |
+| `server.geoip.presets` | `{}` | Operator-authored reusable country-code lists; never applied automatically |
 | `server.healthz.root.enabled` | `false` | Optional direct `/healthz` alias for `/server/healthz` |
 | `server.rate_limit.read.requests` / `write.requests` / `health.requests` | `120` / `10` / `120` per minute | Always-on per-client request limits; counters persist in SQLite |
 | `server.tokens.max_linked` | `25` | Active linked-token limit per owner |
@@ -108,7 +117,7 @@ The MCP endpoint is `/api/v1/server/mcp` (also `/api/mcp` and `/mcp`). It requir
 
 ## Other
 
-The browser interface includes passphrase generation, search, About and Help pages, the configured privacy policy and DPO contact, terms, contact and security pages, preferences, and owner-token management. The first-visit consent banner works without JavaScript; when data sales are enabled, the privacy page offers a CSRF-protected CCPA opt-out. Privacy-policy deployment facts and consent copy are configured under `server.privacy`; see the [configuration guide](docs/configuration.md). Onion responses use `server.tor.contact_email` when configured and never fall back to clearnet contact addresses. Confirmed abuse, DMCA, and privacy submissions are emailed when SMTP is ready. Confirmed security reports are encrypted and stored for operator review; they are not emailed.
+The browser interface includes passphrase generation, search, About and Help pages, the configured privacy policy and DPO contact, terms, contact and security pages, preferences, and owner-token management. Forms use native HTML behavior without JavaScript, and text-oriented browsers receive a dedicated no-script layout. The first-visit consent banner works without JavaScript; when data sales are enabled, the privacy page offers a CSRF-protected CCPA opt-out. Privacy-policy deployment facts and consent copy are configured under `server.privacy`; see the [configuration guide](docs/configuration.md). Onion responses use `server.tor.contact_email` when configured and never fall back to clearnet contact addresses. Confirmed abuse, DMCA, and privacy submissions are emailed when SMTP is ready. Confirmed security reports are encrypted and stored for operator review; they are not emailed.
 
 The embedded locale set includes English, Spanish, French, German, Italian, and Arabic. Arabic uses right-to-left layout. See the [translation guide](docs/translating.md).
 

@@ -29,7 +29,7 @@ The address is omitted from autodiscovery and its hostname field is empty in hea
 - `/api/v1` returns the service summary and key endpoint paths; `/api/v1/` redirects to the canonical root.
 - `/api/v1/server/swagger` returns the OpenAPI document; `/api/swagger` is an unversioned alias.
 - `/api/v1/server/graphql` accepts GraphQL requests; `/api/graphql` is its unversioned alias.
-- `/api/v1/server/mcp` exposes the API operations as stateless Streamable HTTP tools; `/api/mcp` and `/mcp` are direct aliases. Every MCP request requires a Bearer token, and linked tokens are recommended for individual clients.
+- `/api/v1/server/mcp` exposes the API operations as stateless Streamable HTTP tools; `/api/mcp` and `/mcp` are direct aliases. Every MCP request requires a Bearer token, and linked tokens are recommended for individual clients. Use `read` scope when the client only needs lookup tools; write tools are omitted for that scope. Linked tokens default to `read-write`.
 - `/api/v1/server/help/mcp` returns request-resolved MCP connection details and the public tool registry; `/server/help/mcp` provides the same guidance as a rendered page.
 - `/.well-known/llms.txt` and `/llms.txt` publish the OpenAPI endpoint catalog for AI clients.
 - `/robots.txt` provides crawler guidance. `/.well-known/security.txt` is the canonical RFC 9116 security contact file; `/security.txt` returns `404`.
@@ -41,6 +41,6 @@ The service's well-known namespace is intentionally limited to the paths documen
 
 The service worker activates automatically on first install. When an updated worker is ready, the page offers **Update now** or **Later**; choosing **Update now** activates the waiting worker and reloads the page, with a five-second fallback if the browser does not report control handover. Update prompts follow the page's selected language.
 
-Static assets and the manifest use cache-first delivery after their first successful fetch. API requests bypass the worker. Navigations try the network for up to eight seconds, then use a cached copy only when the response was marked public. `/offline.html` is currently the only route that emits the public-cache marker, and only when the request has no authorization or user-preference cookies. Other offline navigation uses a synthesized `503` page with translated text stored from the last visited page (English defaults are used before any page has stored them). Failed subresource requests return `504` responses.
+Static assets and the manifest use cache-first delivery after their first successful fetch. API requests bypass the worker. Navigations try the network for up to eight seconds, then use a cached copy only when the response was marked public. Public read-only pages emit the marker only when they contain no per-visitor state; the worker keys their copies by theme, language and consent. Other offline navigation uses a synthesized `503` page with translated text stored from the last visited page (English defaults are used before any page has stored them). There is no static offline route. Failed subresource requests return `504` responses.
 
 The project currently exposes MCP over HTTP. OAuth/OIDC, webhooks, federation, and external identity integrations are not implemented.

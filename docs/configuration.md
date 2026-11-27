@@ -36,6 +36,14 @@ The server reads `server.yml` from the OS-specific configuration directory and c
 | `server.scheduler.timezone` | `America/New_York` | IANA timezone for scheduled task times |
 | `server.scheduler.catch_up_window` | `1h` | Maximum age of a missed scheduled run that is replayed at startup |
 | `server.scheduler.tasks.database_check.schedule` | `@every 1m` | Probe the database read and write handles using bounded read-only queries |
+| `server.database.driver` | `sqlite` | Database driver; accepts `sqlite`, `sqlite2`, `sqlite3`, `libsql`, or `turso` |
+| `server.database.url` | empty | Optional SQLite file path or remote `libsql://` / `https://` connection URL; the URL scheme selects the driver |
+| `server.database.token` | empty | Separate libSQL auth token, stored in `secrets.yml` |
+| `server.database.cache.enabled` | `false` | Enable the local SQLite read replica for a remote libSQL database |
+| `server.database.cache.path` | `{data_dir}/db/cache.db` | Owner-only SQLite cache file path |
+| `server.database.cache.sync_interval` | `30s` | Background full reconciliation interval for cached tables |
+| `server.database.cache.offline_mode` | `true` | When enabled, permit eligible cached reads in read-only maintenance while remote libSQL is unavailable |
+| `server.database.cache.max_age` | `1h` | Maximum cache age while remote is reachable; older tables are read remotely |
 | `server.scheduler.tasks.update_check.schedule` | `0 6 * * *` | Check the configured release channel daily; notify operators once per eligible version |
 | `server.notifications.database_error.enabled` | `true` | Enable alerts after consecutive failed database probes |
 | `server.notifications.database_error.failures` | `3` | Consecutive failed probes before the first database alert |
@@ -67,6 +75,7 @@ The server reads `server.yml` from the OS-specific configuration directory and c
 
 GeoIP downloads, status behavior, and dataset attribution are documented in the [GeoIP guide](geoip.md).
 Blocklist source formats, freshness, and matching policy are documented in the [blocklists guide](blocklists.md).
+SQLite and remote libSQL setup, URL credential handling, cache behavior, and offline maintenance are documented in the [database guide](database.md).
 
 ### Internal metrics
 

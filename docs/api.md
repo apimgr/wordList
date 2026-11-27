@@ -28,7 +28,15 @@ The public word-list and passphrase REST API is rooted at `/api/v1` and requires
 
 ### Owner token management
 
-The primary token creates an anonymous owner. A primary token can create and manage linked tokens; linked tokens cannot manage tokens. Raw token values are returned only by create, reveal, and rotate operations. Store each raw value securely when it is returned.
+The primary token creates an anonymous owner and has `global` scope. A primary token can create and manage linked tokens; linked tokens cannot manage tokens. Linked tokens have immutable `read` or `read-write` scope, defaulting to `read-write`. A `read` token may read owner resources through REST and MCP but cannot mutate them; MCP also omits write tools. `global` is reserved for the primary token and is rejected when creating a linked token. Every token metadata object includes `scope`; raw token values are returned only by create, reveal, and rotate operations. Store each raw value securely when it is returned.
+
+Create a linked token with an explicit scope when needed:
+
+```json
+{"name":"automation","scope":"read","expires":"30d"}
+```
+
+Omitting `scope` creates a `read-write` token. Scope cannot be changed later; revoke and recreate the linked token to change it.
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -56,8 +64,8 @@ When `server.healthz.root.enabled` is `true`, `GET /healthz` mounts the same fro
 | GET | `/api/v1/server/privacy` | Privacy summary, cookie descriptions, sharing, retention, third-party services, CCPA state, consent/usage text, and the language-resolved operator extension source/format |
 | GET | `/api/v1/server/terms` | Localized built-in Markdown terms, or the language-resolved `server.branding.content.terms` source; `format` identifies Markdown, HTML, or text |
 | GET | `/api/v1/server/help/mcp` | Resolved MCP URL, aliases, authentication scheme, live tool names, and WordList guidance |
-| GET | `/api/v1/server/contact` | Field descriptors with conditional requirements, one-use form token, CAPTCHA challenge, security URL, and public abuse email fallback |
-| POST | `/api/v1/server/contact` | Two-step JSON submission: first call validates descriptor-driven field rules and returns a review token; confirm sends abuse, DMCA, and privacy reports when SMTP is ready, or stores security reports encrypted and returns a tracking ID. Security notifications and status email contain no plaintext report content |
+| GET | `/api/v1/server/contact` | Field descriptors with conditional requirements, one-use form token, selected CAPTCHA provider and simple no-JavaScript fallback challenge, security URL, and public abuse email fallback. Tor and I2P requests always receive the simple provider |
+| POST | `/api/v1/server/contact` | Two-step JSON submission: submit checks the single-use form token, one CAPTCHA proof, rate limits, and content rules, then returns a review token without delivery. Confirm repeats every business field and requires `confirmed: true`; rate limits count at confirm and duplicate reports are silently dropped. Abuse, DMCA, and privacy reports require working SMTP; security reports are stored encrypted and return a tracking ID. Security notifications and status email contain no plaintext report content |
 | GET, POST | `/api/v1/server/preferences` | Read or partially update `theme`, `lang`, and `wordList_pref_{key}` values; POST reports `applied` and `ignored`, and requires accepted Preferences-cookie consent to write cookies |
 | GET | `/api/v1/server/preferences/sync` | Export effective theme/language and accepted app preference cookies as a URL and short code; consent and credential cookies are excluded |
 | GET | `/api/v1/server/preferences/sync/import` | Import from a `code` or direct query parameters; direct values win and missing Preferences-cookie consent blocks writes without an error |

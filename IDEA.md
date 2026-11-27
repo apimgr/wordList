@@ -146,7 +146,7 @@ Public word-list and passphrase routes are unauthenticated; mandatory AI.md syst
 | POST | `/api/v1/server/preferences/tokens/primary/rotate` | Primary bearer token | Replace the primary token in place and return its new value |
 | DELETE | `/api/v1/server/preferences/tokens/primary` | Primary bearer token | Delete the owner after last-four-character confirmation; return deleted token/resource counts |
 | GET | `/api/v1/server/preferences/tokens` | Primary bearer token | List masked primary and linked-token metadata |
-| POST | `/api/v1/server/preferences/tokens` | Primary bearer token | Create a named linked token with optional expiry; return the raw value once |
+| POST | `/api/v1/server/preferences/tokens` | Primary bearer token | Create a named linked token with `read` or `read-write` scope (default `read-write`) and optional expiry; return the raw value once |
 | POST | `/api/v1/server/preferences/tokens/{id}/reveal` | Primary bearer token | Reveal one linked token |
 | POST | `/api/v1/server/preferences/tokens/{id}/rotate` | Primary bearer token | Rotate one linked token in place |
 | PATCH | `/api/v1/server/preferences/tokens/{id}` | Primary bearer token | Rename a linked token or update its expiry |
@@ -173,21 +173,16 @@ Project components use the shared CSS catalog's token, naming, layer, direction,
 
 | Component | Block and elements | Variants | States |
 |---|---|---|---|
-| Health page | `.health-page`, `.health-header`, `.health-footer` | none | responsive one and two column layout |
+| Health page | `.health-header`, `.health-footer` | none | stacked page content; responsive status and detail components |
 | Health status | `.status-banner`, `.status-icon`, `.status-text`, `.status-ok`, `.status-warning`, `.status-error` | ok, warning, error | each state includes an icon and text; page health reflects current service state |
 | Health details | `.info-list`, `.info-label`, `.info-value`, `.stats-grid`, `.feature-list`, `.feature-enabled`, `.feature-disabled` | enabled, disabled | empty and populated values; status is conveyed by text as well as color |
-| Token page | `.token-page-layout`, `.token-list`, `.token-item`, `.token-dates`, `.token-actions`, `.token-status` | active, expired, revoked | empty list, active and revoked tokens, dates, and available actions |
-| Contact review | `.contact-review`, `.field-required` | review, required field | review and edit/confirm controls; required fields identify validation needs in text |
+| Contact review | `.contact-review`, `.contact-review-panel`, `.contact-review-email`, `.field-required` | review, required field | fixed, CSS-only review panel with prominent email and edit/confirm controls; required fields identify validation needs in text |
 | Contact honeypot | `.honeypot` | hidden | inaccessible to assistive technology and keyboard navigation |
 | Content navigation | `.breadcrumb` | none | linked parent and current page context |
 | Markdown content | `.markdown-content` | none | long and wrapped content |
 | Operator note | `.operator-note` | none | present when operator-provided content exists |
 | Passphrase result | `.result-card`, `.copy-value` | generated result | empty before generation and populated after generation; generated passphrases are not logged or retained |
-| Search results | `.words-results-grid` | populated | empty state or matching words |
+| Search results | `.words-results-grid` | populated | matching words; empty state uses the shared `.empty-state` component |
 | Update notice | `.update-notice` | available | hidden until an update is available; status announced to assistive technology |
 | Theme preference | `.theme-toggle-form` | light, dark, auto | current theme and next-theme action |
 | GraphQL explorer | `.graphiql-mount` | interactive, text-browser link | mounted explorer or a non-JavaScript fallback |
-| MCP copy block | `.mcp-copy` | endpoint, client command, request example | copy action available in interactive browsers |
-| MCP tool table | `.mcp-tool-table` | none | populated registry and responsive horizontal scrolling |
-| Preference actions | `.preference-actions` | save, cancel, reset | normal confirmation popover and text-browser confirmation |
-| Reset popover | `.reset-popover` | open, closed | open, close, keyboard Escape, and backdrop behavior |

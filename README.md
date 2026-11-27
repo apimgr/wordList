@@ -79,11 +79,11 @@ On first start, the server creates `server.yml` and a restricted `secrets.yml` i
 | `server.tokens.idle_purge_days` | `0` | Idle owner purge delay; zero disables it |
 | `server.i18n.default_language` | `en` | Default locale |
 
-The server reads `server.yml` and optional file-based area settings such as `yaml.d/pages.yml` from its configuration directory. In containers, `CONFIG_DIR` and `DATA_DIR` select configuration and data locations. See the [configuration guide](docs/configuration.md) for the current settings and proxy URL behavior.
+The server reads `server.yml` and optional file-based area settings such as `yaml.d/pages.yml` from its configuration directory. In containers, `CONFIG_DIR` and `DATA_DIR` select configuration and data locations. See the [configuration guide](docs/configuration.md) for current settings and the [database guide](docs/database.md) for SQLite, remote libSQL, and optional read-cache behavior.
 
 ## API
 
-The canonical REST API base is `/api/v1`. Public word-list and passphrase routes do not require a token. Owner-token management routes require the specified bearer token; browser cookies are ignored by API routes.
+The canonical REST API base is `/api/v1`. Public word-list and passphrase routes do not require a token. The primary owner token has `global` scope; linked tokens use immutable `read` or `read-write` scope (default `read-write`). Owner-token management routes require the primary bearer token; browser cookies are ignored by API routes. See the [API guide](docs/api.md) for token scope details.
 
 | Endpoint | Purpose |
 |---|---|
@@ -95,7 +95,7 @@ The canonical REST API base is `/api/v1`. Public word-list and passphrase routes
 | `GET /api/v1/letters[/{letter}]` | List starting letters or matching words |
 | `GET /api/v1/lengths/{length}` | List words of a selected length |
 | `GET /api/v1/stats`, `/count` | Read word-list statistics |
-| `GET /api/v1/server/healthz` | Read service health; SQLite or word-list failures return `503` with public-safe check values |
+| `GET /api/v1/server/healthz` | Read service health; database or word-list failures return `503` with public-safe check values |
 | `GET /healthz` | Optional same-handler health alias when `server.healthz.root.enabled` is true |
 | `GET /api/v1/server/auth/check` | Validate a bearer token and return its kind without echoing the token |
 | `GET /api/autodiscover` | Discover the current API version, public origins, configured minimum CLI version, and opt-in onion/I2P addresses; Tor and I2P requests receive no public origins and only their matching exposed address |

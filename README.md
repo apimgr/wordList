@@ -69,6 +69,9 @@ On first start, the server creates `server.yml` and a restricted `secrets.yml` i
 | `server.geoip.enabled` | `true` | Enable local ASN, Country, and City GeoIP data; databases download at first start and update weekly |
 | `server.geoip.deny_countries` / `allow_countries` | `[]` / `[]` | Optional ISO alpha-2 country policy; `allow_countries` takes precedence and IP allowlist entries bypass it |
 | `server.geoip.presets` | `{}` | Operator-authored reusable country-code lists; never applied automatically |
+| `server.security.allowlist` / `blocked_ips` | `[]` / `[]` | IP addresses or CIDRs allowed to bypass IP policy, and static client blocks |
+| `server.security.blocklists.enabled` | `true` | Enforce FireHOL plus configured HTTPS IP/domain sources; updates run at startup and daily |
+| `server.metrics.enabled` | `true` | Enable internal authenticated Prometheus, Grafana, and Loki monitoring endpoints |
 | `server.healthz.root.enabled` | `false` | Optional direct `/healthz` alias for `/server/healthz` |
 | `server.rate_limit.read.requests` / `write.requests` / `health.requests` | `120` / `10` / `120` per minute | Always-on per-client request limits; counters persist in SQLite |
 | `server.tokens.max_linked` | `25` | Active linked-token limit per owner |

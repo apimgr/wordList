@@ -60,7 +60,7 @@ On first start, the server creates `server.yml` and a restricted `secrets.yml` i
 | `server.port` | random `64000`–`64999` (`80` in an application container) | Listen port; `PORT` overrides it |
 | `server.baseurl` | `/` | Optional URL path prefix |
 | `server.mode` | `production` | Application mode |
-| `server.rate_limit.enabled` | `true` | Enable request rate limiting |
+| `server.rate_limit.read.requests` / `write.requests` / `health.requests` | `120` / `10` / `120` per minute | Always-on per-client request limits; counters persist in SQLite |
 | `server.tokens.max_linked` | `25` | Active linked-token limit per owner |
 | `server.tokens.cookie_max_age` | `1y` | Sliding owner-cookie lifetime |
 | `server.tokens.idle_purge_days` | `0` | Idle owner purge delay; zero disables it |

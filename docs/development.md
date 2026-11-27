@@ -18,7 +18,7 @@ make build
 
 ## Run and test
 
-Run the server binary produced by `make dev`. Run `make format` to apply `gofmt` to Go source and tests. The Go test, vet, and coverage gate is `make test`. Run `make lint` for vet, staticcheck, and golangci-lint; all Go tooling runs in `casjaysdev/go:latest`.
+Run the server binary produced by `make dev`. Run `make format` to apply `gofmt` to Go source and tests. `make test` runs the CI quality checks (Go vet, staticcheck, govulncheck, ShellCheck, and shfmt), all Go package tests with the required 60% coverage gate, and the basic compiled-binary/API checks in `tests/run_tests.sh`. Run `make lint` for vet, staticcheck, and golangci-lint. All Go tooling runs in `casjaysdev/go:latest`; no host Go installation is required.
 
 Shared presentation helpers in `src/common/format` render localized durations, binary sizes, and grouped counts, plus user-facing timestamps with a zero-padded day and timezone. Human-readable pages use these helpers; machine-readable API responses preserve raw values.
 

@@ -11,7 +11,7 @@ For an existing language, update only its locale JSON file. A contributor who wa
 3. Add the language to the registry in `src/common/i18n/i18n.go`, including its direction and CLDR plural categories. Mark it required only if it is part of the minimum set.
 4. Add a row to the language table in AI.md through the project's specification maintenance process; do not edit AI.md as part of a translation contribution.
 5. Update the language count and list in the README and this guide; the count must match the locale JSON files.
-6. Run the repository's required tests in its approved container environment.
+6. Run `make test`; Go tools run in the project's approved `casjaysdev/go:latest` container and the gate also checks shell scripts, coverage, and the basic compiled-binary behavior.
 
 The locale files and language registry must contain exactly the same language codes. Every locale must have the same ordinary and plural message keys as English. Each plural message must contain every CLDR category registered for that language and may additionally contain `zero`; unsupported categories are rejected. `{count}` is optional in each category, while all other placeholders must match across categories and locales. `TranslatePlural` uses `golang.org/x/text` cardinal rules and honors an explicit `zero` value. `TranslateFormat` performs literal `{name}` substitution and leaves placeholders without values visible.
 

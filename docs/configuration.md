@@ -1,6 +1,6 @@
 # Configuration
 
-The server reads `server.yml` from the OS-specific configuration directory and creates a default file on first start. `server.yml` holds node-specific settings; other settings belong in the relevant `yaml.d/` area file, such as page content in `yaml.d/pages.yml`. Drop-ins are merged in byte-wise filename order after `server.yml`, and `secrets.yml` is merged last. Later values replace earlier values. The server migrates older all-in-one configurations into area files on startup. Configuration files, drop-ins, and secrets are private to the service account; `yaml.d/` is owner-only. The server creates `secrets.yml` with an `adm_` operator token on first start and prints that token once to the startup console. No web-based configuration interface is provided.
+The server reads `server.yml` from the OS-specific configuration directory and creates a default file on first start. `server.yml` holds node-specific settings; other settings belong in the relevant `yaml.d/` area file, such as page content in `yaml.d/pages.yml`. Drop-ins are merged in byte-wise filename order after `server.yml`, and `secrets.yml` is merged last. Later values replace earlier values. The server migrates older all-in-one configurations into area files on startup. Configuration files, drop-ins, and secrets are private to the service account; `yaml.d/` is owner-only. The server creates `secrets.yml` with an `adm_` operator token on first start and prints that token once to the startup console. No web-based configuration interface is provided. Server command-line options are limited to the flags documented in the [CLI reference](cli.md); there is no generic CLI setting override.
 
 ## Current settings
 
@@ -71,6 +71,17 @@ Blocklist source formats, freshness, and matching policy are documented in the [
 ### Internal metrics
 
 `server.metrics` enables authenticated Prometheus, Grafana, and Loki endpoints. The three generated bearer tokens are stored under `server.metrics.auth.tokens` in `secrets.yml`; they are never included in configuration or health responses. Scrapes are available at `/server/metrics` and the default `/metrics` alias. Keep both paths restricted to monitoring networks.
+
+| YAML key | Default | Purpose |
+|---|---:|---|
+| `server.metrics.enabled` | `true` | Enable metrics endpoints |
+| `server.metrics.root.enabled` | `true` | Mount the root `/metrics` aliases |
+| `server.metrics.auth.allow_unauthenticated` | `false` | Skip token checks on all metrics routes; use only on firewalled networks |
+| `server.metrics.auth.tokens.prometheus` / `grafana` / `loki` | generated | Separate bearer tokens, stored in `secrets.yml` |
+| `server.metrics.include_system` / `include_runtime` | `true` / `true` | Include system and Go runtime metric groups |
+| `server.metrics.loki.max_entries` / `max_age` | `1000` / `1h` | Bound the recent log entries returned by the Loki endpoint |
+| `server.metrics.duration_buckets` | built-in histogram buckets | HTTP duration histogram boundaries in seconds |
+| `server.metrics.size_buckets` | built-in histogram buckets | HTTP body-size histogram boundaries in bytes |
 | `server.pages.help.content` | empty Markdown | Help content shown on `/server/help`; accepts one shared string or a language map with `default`/first-entry fallback |
 | `server.scheduler.tasks.backup_daily.enabled` | `true` | Enable the daily full and cumulative incremental backup task |
 | `server.scheduler.tasks.backup_hourly.enabled` | `false` | Enable hourly incremental backups |

@@ -141,7 +141,7 @@ make test
 make lint
 ```
 
-`make dev` builds the server and client into a temporary directory. `make build` cross-compiles the configured platform matrix. `make test` runs Go tests and vet with coverage enforcement; `make lint` runs vet, staticcheck, and golangci-lint. `./tests/run_tests.sh` runs the basic Docker binary and API checks. Read [Development](docs/development.md) before contributing.
+`make dev` builds the server and client into a temporary directory. `make build` cross-compiles the configured platform matrix. `make test` runs the quality and vulnerability gates, Go tests with coverage enforcement, and the basic binary/API checks; `make lint` runs vet, staticcheck, and golangci-lint. Read [Development](docs/development.md) before contributing.
 
 ## Disclaimer
 

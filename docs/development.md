@@ -30,7 +30,7 @@ The basic binary and HTTP API checks run in Docker:
 ./tests/run_tests.sh
 ```
 
-This invokes `tests/docker.sh`, which runs `make dev`, copies the server and client into a disposable Alpine container, checks their help/version output, starts the server, and checks health, text, and paginated word-list endpoints. The script removes its container and temporary files when it exits. Run `tests/run_tests.sh e2e` (or `make test-e2e`) for the Chromium browser tier and `tests/run_tests.sh incus` (or `make test-incus`) for systemd/OpenRC service checks. Pass `INCUS_MODE=systemd` or `INCUS_MODE=openrc` to select one init system.
+This invokes `tests/docker.sh`, which runs `make dev`, copies the server and client into a disposable Alpine container, checks CLI help/version and server health, then exercises public JSON/text endpoints, API documentation and GraphQL routes, server information pages, content negotiation, overlay health, operator and owner token behavior, and CLI commands. Generated passphrases stay in the test process and are not written to logs or files. The script removes its container and temporary files when it exits. Run `tests/run_tests.sh e2e` (or `make test-e2e`) for the Chromium browser tier and `tests/run_tests.sh incus` (or `make test-incus`) for systemd/OpenRC service checks. Pass `INCUS_MODE=systemd` or `INCUS_MODE=openrc` to select one init system.
 
 ## Project layout
 

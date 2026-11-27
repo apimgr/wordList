@@ -166,3 +166,28 @@ Public word-list and passphrase routes are unauthenticated; mandatory AI.md syst
 | GET | `/api/autodiscover` | None or bearer | Unversioned discovery document with version, public origins, and CLI release metadata |
 
 The browser surface includes `/`, `/generate`, `/search`, `/server/about`, `/server/help`, `/server/help/mcp`, `/server/privacy`, `/server/terms`, `/server/contact`, `/server/dpo`, `/server/security`, `/server/security/policy`, `/server/security/thanks`, `/server/preferences`, `/server/preferences/tokens`, `/server/preferences/sync`, `/server/healthz`, `/server/docs/swagger`, and `/server/docs/graphql`. The shared first-visit consent banner posts to `/server/consent`; when `server.privacy.data.sold` is enabled, the privacy page also includes the CSRF-protected `POST /server/ccpa` opt-out workflow. `/graphql` is not a supported route.
+
+### UI components
+
+Project components use the shared CSS catalog's token, naming, layer, direction, and responsive rules. Shared components are listed in AI.md and appear on `/debug/components`; the project components below are also rendered there in both themes and directions.
+
+| Component | Block and elements | Variants | States |
+|---|---|---|---|
+| Health page | `.health-page`, `.health-header`, `.health-footer` | none | responsive one and two column layout |
+| Health status | `.status-banner`, `.status-icon`, `.status-text`, `.status-ok`, `.status-warning`, `.status-error` | ok, warning, error | each state includes an icon and text; page health reflects current service state |
+| Health details | `.info-list`, `.info-label`, `.info-value`, `.stats-grid`, `.feature-list`, `.feature-enabled`, `.feature-disabled` | enabled, disabled | empty and populated values; status is conveyed by text as well as color |
+| Token page | `.token-page-layout`, `.token-list`, `.token-item`, `.token-dates`, `.token-actions`, `.token-status` | active, expired, revoked | empty list, active and revoked tokens, dates, and available actions |
+| Contact review | `.contact-review`, `.field-required` | review, required field | review and edit/confirm controls; required fields identify validation needs in text |
+| Contact honeypot | `.honeypot` | hidden | inaccessible to assistive technology and keyboard navigation |
+| Content navigation | `.breadcrumb` | none | linked parent and current page context |
+| Markdown content | `.markdown-content` | none | long and wrapped content |
+| Operator note | `.operator-note` | none | present when operator-provided content exists |
+| Passphrase result | `.result-card`, `.copy-value` | generated result | empty before generation and populated after generation; generated passphrases are not logged or retained |
+| Search results | `.words-results-grid` | populated | empty state or matching words |
+| Update notice | `.update-notice` | available | hidden until an update is available; status announced to assistive technology |
+| Theme preference | `.theme-toggle-form` | light, dark, auto | current theme and next-theme action |
+| GraphQL explorer | `.graphiql-mount` | interactive, text-browser link | mounted explorer or a non-JavaScript fallback |
+| MCP copy block | `.mcp-copy` | endpoint, client command, request example | copy action available in interactive browsers |
+| MCP tool table | `.mcp-tool-table` | none | populated registry and responsive horizontal scrolling |
+| Preference actions | `.preference-actions` | save, cancel, reset | normal confirmation popover and text-browser confirmation |
+| Reset popover | `.reset-popover` | open, closed | open, close, keyboard Escape, and backdrop behavior |

@@ -86,7 +86,7 @@ When Tor is installed, the server can host a v3 onion service. Tor status and ke
 
 ## API
 
-The canonical REST API base is `/api/v1`. Public word-list and passphrase routes do not require a token. The primary owner token has `global` scope; linked tokens use immutable `read` or `read-write` scope (default `read-write`). Owner-token management routes require the primary bearer token; browser cookies are ignored by API routes. See the [API guide](docs/api.md) for token scope details.
+The canonical REST API base is `/api/v1` by default; set `server.api_version: v2` to serve `/api/v2` instead. Public word-list and passphrase routes do not require a token. The primary owner token has `global` scope; linked tokens use immutable `read` or `read-write` scope (default `read-write`). Owner-token management routes require the primary bearer token; browser cookies are ignored by API routes. See the [API guide](docs/api.md) for token scope details.
 
 | Endpoint | Purpose |
 |---|---|

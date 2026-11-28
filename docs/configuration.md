@@ -15,6 +15,7 @@ The server reads `server.yml` from the OS-specific configuration directory and c
 | `server.trusted_proxies.additional` | empty | Additional proxy IPs, CIDRs, or DNS names allowed to supply forwarded headers; DNS names refresh every five minutes |
 | `server.trusted_proxies.client_ip_header` | `auto` | Trusted-proxy client address header; auto resolves a right-to-left proxy chain |
 | `server.mode` | `production` | Application mode; `--maintenance mode` writes this setting to `yaml.d/maintenance.yml` |
+| `server.api_version` | `v1` | Canonical API prefix; accepts `v1` or `v2` |
 | `server.branding.title` | `WordList` | Public application title |
 | `server.branding.tagline` | empty | Optional public application tagline |
 | `server.branding.description` | built-in | Public application description and SEO fallback |

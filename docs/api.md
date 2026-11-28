@@ -1,6 +1,12 @@
 # API reference
 
-The public word-list and passphrase REST API is rooted at `/api/v1` and requires no authentication. JSON success responses use `{"ok":true,"data":...}`. Errors use `{"ok":false,"error":"...","message":"..."}` with an optional `details` object when structured context is needed; the HTTP status carries the status code, and absent fields are omitted. A `.txt` route or `Accept: text/plain` returns plain text with a trailing newline. Owner-token management endpoints require a primary owner token in the `Authorization: Bearer` header. Cookie credentials are ignored by API routes.
+The public word-list and passphrase REST API is rooted at `/api/v1` by default. Set `server.api_version` to `v2` to use `/api/v2`; the server serves only the configured canonical version. Public data routes require no authentication; system routes list their required Bearer-token scope below. JSON success responses use `{"ok":true,"data":...}`. Errors use `{"ok":false,"error":"...","message":"..."}` with an optional `details` object when structured context is needed; the HTTP status carries the status code, and absent fields are omitted. Cookie credentials are ignored by API routes.
+
+## Response negotiation
+
+For `/api/**`, a `.txt` suffix always selects text. Otherwise, explicit `Accept: application/json` wins over `Accept: text/plain`; without either header, curl, wget, and httpie receive the route’s plain-text serialization, while browser and API clients receive JSON. API text is generated from the response data and ends with a newline.
+
+Rendered frontend routes honor `Accept` in this order: `application/json` returns the paired versioned API response, `text/html` returns the page, and `text/plain` returns a readable text rendering of the page. Without an explicit format, recognized HTTP tools such as curl and wget receive readable text; other clients receive HTML. `/server/healthz` and the optional `/healthz` alias use the dedicated human-readable health layout for text and the same bare JSON document as the versioned health API for JSON. `/server/preferences/tokens` returns `406` for JSON negotiation because its API operations require Bearer authentication.
 
 ## REST API
 
@@ -9,8 +15,8 @@ The public word-list and passphrase REST API is rooted at `/api/v1` and requires
 | GET | `/api/v1` | Service overview and endpoint list; `/api/v1/` redirects here |
 | GET | `/api/v1/random` or `/api/v1/random/{count}` | Return 6 random words by default; count 1–100 |
 | GET | `/api/v1/random.txt` or `/api/v1/random/{count}.txt` | Same as above in plain text |
-| GET | `/api/v1/passphrase` or `/api/v1/passphrase/{count}` | Secure passphrase; count 1–20, default 6; optional `separator` and `capitalize=false` |
-| GET | `/api/v1/passphrase.txt` or `/api/v1/passphrase/{count}.txt` | Same passphrase as plain text |
+| GET | `/api/v1/passphrase` or `/api/v1/passphrase/{count}` | Secure passphrase; count 1–20, default 6; words use `-` by default, with optional `separator` and `capitalize=false` |
+| GET | `/api/v1/passphrase.txt` or `/api/v1/passphrase/{count}.txt` | Same passphrase as one plain-text line, with words joined by `-` by default; `separator` can override it |
 | GET | `/api/v1/search/{query}` | Prefix search; `mode=contains` enables substring search; `limit` is 1–1000 |
 | GET | `/api/v1/search/{query}.txt` | Search result words as plain text |
 | GET | `/api/v1/words` | Paginated list; `page` defaults to 1 and `per_page` to 100 (maximum 1000) |
@@ -25,6 +31,7 @@ The public word-list and passphrase REST API is rooted at `/api/v1` and requires
 | GET | `/api/v1/letters` | Available starting letters |
 | GET | `/api/v1/count` | Word count as JSON |
 | GET | `/api/v1/count.txt` | Word count as plain text |
+| GET | `/api/v1/cli/binaries/{filename}` | Download an operator-provisioned CLI binary after checksum verification |
 
 ### Owner token management
 
@@ -77,13 +84,13 @@ When `server.healthz.root.enabled` is `true`, `GET /healthz` mounts the same fro
 
 The unversioned compatibility paths `/api/healthz`, `/api/swagger`, `/api/graphql`, `/api/mcp`, and `/mcp` are also available. `/api/autodiscover` returns the current API version, request origin and configured `DOMAIN` origins, plus the configured `cli_min_version`; `cli_versions` is empty until release binaries are provisioned in the server's distribution directory. It includes `onion` and `i2p` addresses only when their respective exposure settings are enabled. Requests to a Tor or I2P address return an empty `urls` list and include only the matching overlay address field, when that overlay is enabled and exposed.
 
-`GET /cli/binaries/wordList-cli-{os}-{arch}[.exe]` streams an operator-provisioned client binary only when its SHA-256 matches the checksum manifest. Downloads are public unless `cli.binary_download.require_auth` is enabled, in which case a valid bearer token is required. See the [CLI guide](cli.md) for update behavior and the [configuration guide](configuration.md) for the distribution directory.
+`GET /api/{api_version}/cli/binaries/wordList-cli-{os}-{arch}[.exe]` streams an operator-provisioned client binary only when its SHA-256 matches the checksum manifest. Downloads are public unless `cli.binary_download.require_auth` is enabled, in which case a valid bearer token is required. See the [CLI guide](cli.md) for update behavior and the [configuration guide](configuration.md) for the distribution directory.
 
 The privacy response uses the standard `{ "ok": true, "data": { ... } }` envelope. Its `ccpa.applicable` value follows `server.privacy.data.sold`, and `ccpa.user_opted_out` reflects the browser's `ccpa_opt_out` cookie. `content.operator_extension` and `content.operator_format` expose the language-resolved `server.branding.content.privacy` source; an empty value means the built-in policy is used without an operator extension. Generated passphrases are never stored.
 
 All health routes render from one shared result. `/server/healthz` and the optional `/healthz` alias negotiate HTML, human-readable text for curl and other command-line clients, or JSON. The versioned and unversioned API routes return a bare JSON object by default; `.txt`, `Accept: text/plain`, and non-interactive API requests without an explicit format receive dot-notation machine text. API JSON/text use compact uptime and RFC 3339 UTC timestamps; frontend HTML/text localize labels and humanize durations, timestamps, and counts.
 
-Health JSON fields follow a stable order: `project`, `status`, optional `pending_restart`, `restart_reason`, and `maintenance`, then version/build/runtime values, `features`, `checks`, and `stats`. Dataset checks are cached and refreshed by the scheduler at most every 60 seconds and after data updates; health requests do not scan datasets or query the database for statistics. The core database, cache, disk, and scheduler probes also run outside request handling. Health output contains only public-safe status values and aggregate counts. The status is `503` only for `unhealthy`, `maintenance`, or `shutting_down`; `degraded` and `restart_required` remain `200`.
+Health JSON fields follow a stable order: `project`, `status`, optional `pending_restart`, `restart_reason`, and `maintenance`, then version/build/runtime values, `features`, `checks`, and `stats`. Dataset checks are cached and refreshed by the scheduler at most every 60 seconds and after data updates; health requests do not scan datasets or query the database for statistics. The core database, cache, disk, and scheduler probes also run outside request handling and report only `ok` or `error`. Missing optional GeoIP data reports its `geoip_{database}` check as `degraded`, including when no usable copy exists; because GeoIP is fail-open enrichment, it cannot make the service unhealthy. Health output contains only public-safe status values and aggregate counts. The status is `503` only for `unhealthy`, `maintenance`, or `shutting_down`; `degraded` and `restart_required` remain `200`.
 
 ## Model Context Protocol
 

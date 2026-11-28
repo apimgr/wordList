@@ -23,6 +23,7 @@ wordList --maintenance backup test [FILE]
 wordList --maintenance email test [--to ADDRESS] [--dry-run]
 wordList --maintenance restore FILE
 wordList --maintenance mode {production|development|debug}
+wordList --maintenance tor status|validate|restart|regenerate|vanity|import-keys
 wordList --maintenance security list [--status STATUS]
 wordList --maintenance security show TRACKING_ID
 wordList --maintenance security export TRACKING_ID [--output FILE]
@@ -35,6 +36,8 @@ Restore requires root, a first-run empty database, or the service user's operato
 Changing the server mode requires root or the service user's operator token. The command updates only `server.mode` in `yaml.d/maintenance.yml`, preserves other drop-in values, and requires a service restart to take effect. Root changes print a warning because development diagnostics can expose additional information.
 
 Security report maintenance requires root or the `wordList` service user with the operator token. `list` and `show` print metadata only. `export` writes the encrypted report payload to a new mode-`0600` file; use `--output -` to write it to standard output.
+
+Tor status and validation work offline and print JSON. Restart, regeneration, vanity search, and key import use the running server's loopback-only control endpoints. Key replacement operations prompt before proceeding; `--yes` confirms them without prompting. See the [Tor guide](tor.md) for command options, key validation, and vanity search behavior.
 
 The email test command requires root or operator-token authorization. Use `--dry-run` to validate and preview all embedded or custom templates without sending; invalid overrides are reported and make the command exit with status 65. A real test requires a ready SMTP relay and uses `server.notifications.email.reply_to` as its default recipient; pass `--to` to override it. Test sends are recorded in the audit log.
 

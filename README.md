@@ -3,6 +3,7 @@
 [![CI](https://github.com/apimgr/wordList/actions/workflows/ci.yml/badge.svg)](https://github.com/apimgr/wordList/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/apimgr/wordList)](https://github.com/apimgr/wordList/releases)
 [![License](https://img.shields.io/github/license/apimgr/wordList)](LICENSE.md)
+[![Documentation](https://readthedocs.org/projects/apimgr-wordlist/badge/?version=latest)](https://apimgr-wordlist.readthedocs.io/en/latest/)
 
 ## About
 
@@ -80,6 +81,8 @@ On first start, the server creates `server.yml` and a restricted `secrets.yml` i
 | `server.i18n.default_language` | `en` | Default locale |
 
 The server reads `server.yml` and optional file-based area settings such as `yaml.d/pages.yml` from its configuration directory. In containers, `CONFIG_DIR` and `DATA_DIR` select configuration and data locations. See the [configuration guide](docs/configuration.md) for current settings and the [database guide](docs/database.md) for SQLite, remote libSQL, and optional read-cache behavior.
+
+When Tor is installed, the server can host a v3 onion service. Tor status and key maintenance are available through local CLI commands; see the [Tor guide](docs/tor.md).
 
 ## API
 

@@ -1,6 +1,6 @@
 # API reference
 
-The public word-list and passphrase REST API is rooted at `/api/v1` and requires no authentication. JSON success responses use `{"ok":true,"data":...}` and errors use `{"ok":false,"error":"...","message":"...","details":...}`. A `.txt` route or `Accept: text/plain` returns plain text with a trailing newline. Owner-token management endpoints require a primary owner token in the `Authorization: Bearer` header. Cookie credentials are ignored by API routes.
+The public word-list and passphrase REST API is rooted at `/api/v1` and requires no authentication. JSON success responses use `{"ok":true,"data":...}`. Errors use `{"ok":false,"error":"...","message":"..."}` with an optional `details` object when structured context is needed; the HTTP status carries the status code, and absent fields are omitted. A `.txt` route or `Accept: text/plain` returns plain text with a trailing newline. Owner-token management endpoints require a primary owner token in the `Authorization: Bearer` header. Cookie credentials are ignored by API routes.
 
 ## REST API
 

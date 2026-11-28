@@ -108,6 +108,10 @@ Public word-list and passphrase routes are unauthenticated; mandatory AI.md syst
 
 | Method | Path | Auth | Purpose and request/response summary |
 |---|---|---|---|
+| GET | `/server` | None | Permanently redirect to the About page |
+| POST | `/server/consent` | None; same-origin form | Save cookie-consent choice and return to the originating page |
+| POST | `/server/ccpa` | None; CSRF-protected form | Save the CCPA opt-out preference and return to the originating page |
+| POST | `/announcements/dismiss` | None; same-origin form | Dismiss a configured announcement for this browser |
 | GET | `/api/v1/` | None | API summary, version, word count, and endpoint list |
 | GET | `/api/v1/passphrase` | None | Generate a secure passphrase; `count` query defaults to 6 and must be 1–20; returns passphrase, words, entropy, and options |
 | GET | `/api/v1/passphrase/{count}` | None | Generate a secure passphrase with 1–20 words; returns passphrase, words, entropy, and options |

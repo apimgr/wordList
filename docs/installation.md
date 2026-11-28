@@ -9,7 +9,7 @@ Review the published port and volume locations before deployment. The included m
 The image listens on port `80` by default. For a standalone container, map a host port to container port `80` and persist `/config` and `/data`:
 
 ```sh
-docker run -d --name wordList \
+docker run -d --name "wordList-$(od -An -N4 -tx1 /dev/urandom | tr -d ' \n')" \
   -p 127.0.0.1:64580:80 \
   -v wordlist-config:/config \
   -v wordlist-data:/data \
